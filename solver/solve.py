@@ -12,6 +12,11 @@ from solver.flow_mip import solve_flow
 from solver.models import Optimality, ParetoFrontier, Problem, Solution
 from solver.normalize import normalize
 
+# HiGHS は LP 下界が分数のインスタンスで分枝後、status=Optimal を返しつつ mip_gap に
+# machine-epsilon の残差（2e-16〜9e-14）を残すことがある。`== 0.0` の厳密比較だと真の最適解を
+# 未証明と誤標記するため、許容誤差で判定する（float 等価比較アンチパターンの回避）。
+_GAP_TOL = 1e-9
+
 
 def solve_material(problem: Problem, *, time_limit: float | None = None) -> Solution:
     """材料最適（使用本数最小）を arc-flow + HiGHS で厳密に解く."""
@@ -27,7 +32,7 @@ def solve_material(problem: Problem, *, time_limit: float | None = None) -> Solu
     total_waste = z * L - occupancy
     waste_ratio = (total_waste / (z * L)) if z > 0 else 0.0
 
-    proven = flow.status == "Optimal" and flow.mip_gap == 0.0
+    proven = flow.status == "Optimal" and flow.mip_gap < _GAP_TOL
     optimality = Optimality(
         status=flow.status,
         mip_gap=flow.mip_gap,

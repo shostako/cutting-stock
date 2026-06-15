@@ -89,10 +89,14 @@ selection-MIP に退避し、その点は「P ≤ k, gap付き上界」と明示
 ## 整数化・最適性・不変条件
 
 - 材料軸/段取り軸とも**最初から整数MIP/CPで直接解く**（LP緩和は下界算定にのみ使う）。
-- **二重裏取り**: 材料軸は (a) `mip_gap==0.0`、(b) LP緩和を別途解き `z_int ≥ ⌈z_LP⌉` を確認。両者一致で round-up property
-  成立＝ソルバ自己申告に依存しない第2証拠。段取り軸は `status==OPTIMAL` かつ `BestObjectiveBound==ObjectiveValue`。
-- **Optimality データ**（全解に必ず添付, ネスト dataclass）: `Optimality(mip_gap, lp_lower_bound, proven_optimal=(gap==0 and lb==obj), setup_proven, status, timed_out)`。
-  `OPTIMAL` を名乗るのは `gap=0 かつ LB=解値` のときだけ。
+- **二重裏取り**: 材料軸は (a) `status==Optimal かつ mip_gap < 1e-9`（**float 許容誤差で判定**）、(b) LP緩和を別途解き
+  `z_int ≥ ⌈z_LP⌉` を確認。両者一致で round-up property 成立＝ソルバ自己申告に依存しない第2証拠。
+  段取り軸は `status==OPTIMAL` かつ `best_objective_bound==objective_value`。
+  > ⚠ M2 検証の知見: `mip_gap == 0.0` の**厳密比較は誤り**。HiGHS は LP下界が分数のインスタンスで分枝後、
+  > status=Optimal を返しつつ mip_gap に machine-epsilon 残差（2e-16〜9e-14）を残す。`solver/solve.py` は
+  > 許容誤差 `< 1e-9`（定数 `_GAP_TOL`）で判定する（float 等価比較アンチパターンの回避, CLAUDE.md tool-design-principles）。
+- **Optimality データ**（全解に必ず添付, ネスト dataclass）: `Optimality(status, mip_gap, lp_lower_bound, proven_optimal, setup_proven, timed_out)`。
+  `proven_optimal` は `status==Optimal かつ mip_gap < 1e-9` のときだけ True。`OPTIMAL` を名乗るのも同条件。
 - **kerf不変条件（必須 property test）**: 全パターンで `Σℓ_j + m·k ≤ L` と `waste = L − Σℓ − m·k ≥ 0`。
   総量保存 `z·L = Σℓ充足 + Σkerf + Σwaste`。
   ※提案段階で出た例 `990×3 @ L=2995,k=10`（占有3000>2995, waste=−5）は本不変条件違反。**実装はこれをハードに弾く**。

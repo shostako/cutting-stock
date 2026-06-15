@@ -15,7 +15,11 @@
   - arc-flow MIP on HiGHS で使用本数最小を gap=0 厳密に解く。canonical order（de Carvalho）で対称性破り。
   - フロー分解→Patternグルーピング、Optimality（mip_gap + LP独立下界の二重裏取り）添付。
   - テスト 13件 green（smoke 4 + material 9）。連続下界 ≤ 使用本数 ≤ FFD上界 のサンドイッチで最適性を裏取り。
-- GUIは未着手。次は **M2 正当性検証（ウルトラコード）**: oracle.py（CP-SAT割当直接解）× arc-flow 突合の CI 化、BPPLIB ベンチ、kerf不変条件 property test。**arc-flow縮約のサイレント故障をここで潰す**。
+- 2026-06-16: **M2 正当性検証（ウルトラコード）完了 = PASS**。oracle.py（CP-SAT割当 独立ground-truth）+ verify.py（crosscheck）実装。
+  - ウルトラコード敵対検証（4攻撃面 + エージェント独自分）で**合計 ~14,259 + ~5,500 件**を突合。**arc-flow の normal-patterns 縮約による最適解の取りこぼしはゼロ**（bars_used が常に oracle/総当たり真最適と一致）＝縮約・フロー定式化・分解は健全。
+  - 唯一の発見は**報告層のバグ**: `solve.py` の `proven_optimal` 判定が `mip_gap == 0.0` の厳密 float 比較で、LP下界が分数→HiGHS分枝時の machine-epsilon 残差（2e-16〜9e-14）を未証明と誤標記していた偽陰性。許容誤差 `< 1e-9`（`_GAP_TOL`）に修正。偽陰性インスタンスを回帰テストに昇格。
+  - テスト 36件 green（smoke4 + material9 + oracle突合3 + 不変条件8 + proven_optimal回帰5 ほか）。
+- GUIは未着手。次は **M3 段取り軸 + パレート（ソロ）**: `setup_mip.py`（CP-SAT 設定モデルB）→ `pareto.py`（z*..z*+B 掃引・非劣点抽出）→ `solve()` を ParetoFrontier に拡張。
 
 ## 確定事項
 
@@ -35,7 +39,12 @@
 2. ~~ソルバの設計を詰める（ウルトラコード）。~~ → 完了（`docs/SOLVER_DESIGN.md` に確定）。
 3. ~~M0 セットアップ。~~ → 完了。
 4. ~~M1 材料最適コア。~~ → 完了（arc-flow on HiGHS, gap=0, テスト13件 green）。
-5. **M2 正当性検証（ウルトラコード, 次にやる）**: `docs/SOLVER_DESIGN.md`「M2 検証計画」に従い、
-   `oracle.py`（CP-SAT 割当直接解）× arc-flow 目的値一致を敵対的に裏取り。BPPLIB 既知最適突合・kerf不変条件 property test。
-   **arc-flow縮約のサイレント故障をここで潰す**。緑になるまで M3（段取り軸）に進まない。
-   （以降 M3→M7 は `docs/SOLVER_DESIGN.md` 参照。**M2/M7 がウルトラコード検証ゲート**）
+5. ~~M2 正当性検証（ウルトラコード）。~~ → **PASS**（縮約の最適解取りこぼしゼロ／report層のfloat比較バグを1件修正）。
+6. **M3 段取り軸 + パレート（ソロ, 次にやる）**: `setup_mip.py`（CP-SAT 設定モデルB: パターン種類数の真の最小を証明）
+   → `pareto.py`（材料最適 z* を端点に z*..z*+B を ε制約掃引・非劣点抽出）→ `solve()` を ParetoFrontier に拡張。
+   `P_min` を小規模総当たりと照合。（以降 M4→M7 は `docs/SOLVER_DESIGN.md` 参照。**M7 がウルトラコード検証ゲート**）
+
+検証の取りこぼし（M3前/M7で塞ぐと堅い、PASS判定のスコープ外）:
+- 大規模域（types>10, qty>25, ビン数>16）は oracle/総当たりが証明不能で未踏。縮約の正しさは規模非依存の構造性質なので PASS は保つ。
+- PIECE_TOO_LONG 経路は committed テストで確認済みだが掃引では未発火（正常系集中）。
+- kerf 定義（Model A）の妥当性は crosscheck の射程外（両ソルバが同定義共有のため）。上位設計の前提。
