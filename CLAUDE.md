@@ -11,13 +11,14 @@
 このプロジェクトは別セッション（labで設計）からファイル経由で引き継がれている。
 作業を始める前に必ず以下を読むこと:
 
-1. `docs/SPEC.md` — 問題仕様・目的関数・可視化要件
-2. `docs/PLAN.md` — ビルド手順・技術スタック・ウルトラコードを撃つ箇所・次のアクション
-3. `PROGRESS.md` — 現在の到達点と次の一手
+1. `docs/SPEC.md` — 問題仕様・目的関数・可視化要件・カット代の数え方（Model A 確定）
+2. `docs/SOLVER_DESIGN.md` — **ソルバ核の確定設計（SSOT）**。アーキ・アルゴ・データモデル・API・実装マイルストンM0-M7
+3. `docs/PLAN.md` — ビルド方針・技術スタック・ウルトラコードを撃つ箇所
+4. `PROGRESS.md` — 現在の到達点と次の一手
 
 ## 技術スタック（決定済み）
 
-- **ソルバ核**: Python 3.12 + uv。OR-Tools（列生成 or CP-SAT）。GUIから完全分離する＝後でCLI/デスクトップアプリ/バッチに載せ替え可能にする。
+- **ソルバ核**: Python 3.12 + uv。**材料軸=Arc-flow MIP on HiGHS（`highspy`）/ 段取り軸=CP-SAT（`ortools`）の2本立て**（詳細 `docs/SOLVER_DESIGN.md`）。GUIから完全分離＝後でCLI/デスクトップ/バッチに載せ替え可能。
 - **GUI**: Web（React + Vite）。Python核とはローカルAPIで接続。
 - ディレクトリ: `solver/`（Python核）, `web/`（フロント）, `docs/`（仕様）
 
