@@ -8,6 +8,7 @@ import { InputPanel, type InputState } from './components/InputPanel'
 import { ParetoChart } from './components/ParetoChart'
 import { MetricsCard } from './components/MetricsCard'
 import { PatternView } from './components/PatternView'
+import { ComparePanel } from './components/ComparePanel'
 
 const ERROR_LABEL: Record<string, string> = {
   INFEASIBLE: '解なし',
@@ -36,7 +37,14 @@ function App() {
   const [error, setError] = useState<string | null>(null)
   const [feasibility, setFeasibility] = useState<string | null>(null)
   const [healthy, setHealthy] = useState<boolean | null>(null)
+  const [compareMode, setCompareMode] = useState(false)
+  const [dirty, setDirty] = useState(false) // 入力が最新の結果と乖離（再計算が要る）
   const abortRef = useRef<AbortController | null>(null)
+
+  const updateInput = (s: InputState) => {
+    setInput(s)
+    setDirty(true)
+  }
 
   useEffect(() => {
     health().then(setHealthy)
@@ -67,6 +75,7 @@ function App() {
       } else {
         setResult(res)
         setSelected(res.pareto.recommended_index)
+        setDirty(false)
         try {
           const v = await validate(input)
           setFeasibility(v.feasible ? `実行可能（下界 ${v.lower_bound_bins} 本）` : null)
@@ -97,7 +106,7 @@ function App() {
         <aside className="left">
           <InputPanel
             state={input}
-            onChange={setInput}
+            onChange={updateInput}
             onSolve={onSolve}
             loading={loading}
             error={error}
@@ -113,7 +122,31 @@ function App() {
         </aside>
 
         <main className="right">
-          <PatternView solution={sol} colorOf={colorOf} labelOf={labelOf} />
+          <div className="right-toolbar">
+            <h2>カットパターン</h2>
+            {result.pareto.solutions.length > 1 && (
+              <label className="compare-toggle">
+                <input
+                  type="checkbox"
+                  checked={compareMode}
+                  onChange={(e) => setCompareMode(e.target.checked)}
+                />
+                比較モード（材料最優先 ⇄ 段取り最少）
+              </label>
+            )}
+          </div>
+          {dirty && (
+            <div className="stale-banner">
+              入力が変わりました。「最適化を実行」で再計算してください（下は前回の結果）。
+            </div>
+          )}
+          <div className={dirty ? 'stale-content' : undefined}>
+            {compareMode && result.pareto.solutions.length > 1 ? (
+              <ComparePanel frontier={result.pareto} colorOf={colorOf} labelOf={labelOf} />
+            ) : (
+              <PatternView solution={sol} colorOf={colorOf} labelOf={labelOf} />
+            )}
+          </div>
         </main>
       </div>
     </div>

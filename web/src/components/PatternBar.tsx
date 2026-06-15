@@ -1,5 +1,6 @@
 import type { Pattern, Segment } from '../api/types'
 import { KERF_COLOR, WASTE_COLOR } from '../colors'
+import { fmt } from '../format'
 
 // 比率忠実バー: 各 segment を left=offset/L%, width=length/L% の絶対配置 div で描く。
 // 数値→比率の線形マップのみ（フロント演算ゼロの精神）。length合計=stock_length は API 保証。
@@ -26,7 +27,7 @@ export function PatternBar({ pattern, colorOf }: { pattern: Pattern; colorOf: (l
       <div className="pattern-meta">
         <span className="pattern-cuts">{pattern.cuts.join(' + ')} mm</span>
         <span className="pattern-run">×{pattern.run_count}本</span>
-        <span className="pattern-waste">残材 {pattern.waste} mm</span>
+        <span className="pattern-waste">残材 {fmt(pattern.waste)} mm</span>
       </div>
       <div className="bar">
         {pattern.segments.map((s, i) => (
@@ -50,7 +51,7 @@ export function PatternBar({ pattern, colorOf }: { pattern: Pattern; colorOf: (l
       </div>
       <div className="bar-scale">
         <span>0</span>
-        <span>{L} mm</span>
+        <span>{fmt(L)} mm</span>
       </div>
     </div>
   )

@@ -74,9 +74,24 @@
 .metrics-card .lb { color: var(--ink-soft); font-size: 11px; margin-left: 4px; }
 
 /* ── パターン表示（右主役）── */
+.right-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+.right-toolbar h2 { font-size: 16px; }
+.compare-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-soft); cursor: pointer; user-select: none; }
+.compare-toggle input { accent-color: var(--accent); }
+
+.stale-banner { background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn); border-radius: 6px; padding: 8px 12px; font-size: 13px; margin-bottom: 12px; }
+.stale-content { opacity: 0.5; transition: opacity 0.2s; }
+
 .pattern-view-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
 .pattern-view-head h2 { font-size: 16px; }
+.lane-title { font-size: 14px; color: var(--accent); }
 .head-metrics { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--ink-soft); }
+
+/* ── 比較モード（2解並置・同一スケール）── */
+.compare-lanes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px; }
+@media (max-width: 1280px) { .compare-lanes { grid-template-columns: 1fr; } }
+.lane { border: 1px solid var(--line); border-radius: 6px; padding: 12px; background: #fafbfc; }
+.lane .legend { display: none; } /* 凡例は共有（上に1つ） */
 
 .legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; font-size: 11px; color: var(--ink-soft); }
 .legend-item { display: inline-flex; align-items: center; gap: 5px; }

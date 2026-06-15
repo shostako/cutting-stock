@@ -1,73 +1,33 @@
-# React + TypeScript + Vite
+# web — cutting-stock GUI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+1次元カッティングストック最適化の Web GUI（React + Vite + TypeScript）。
+ソルバ核（Python）とは `http.py`（FastAPI）越しにローカル接続する。設計は `../docs/GUI_DESIGN.md`。
 
-Currently, two official plugins are available:
+## 起動
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+2つの端末で：
 
-## React Compiler
+```sh
+# 端末1: バックエンド（リポジトリ直下で）
+uv run uvicorn solver.http:app --host 127.0.0.1 --port 8000
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# 端末2: フロント（このディレクトリで）
+npm install      # 初回のみ
+npm run dev      # http://localhost:5173
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+dev サーバは `/solve` `/validate` `/healthz` を `127.0.0.1:8000` へ proxy する（`vite.config.ts`）。
+バックエンド未起動でも、初期表示は `src/fixtures.ts`（実ソルバ出力）で全 UI を描画できる。
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 構成
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- `src/api/` — 型定義（`types.ts`）と fetch クライアント（`client.ts`）
+- `src/components/` — InputPanel / ParetoChart / MetricsCard / PatternView(+PatternBar) / ComparePanel / OptimalityBadge
+- `src/colors.ts` `src/format.ts` — 色割当・数値整形
+- チャートは全て自前（棒=幅%の比率忠実 HTML、散布図=SVG）。依存は react/react-dom のみ。
+
+## ビルド
+
+```sh
+npm run build    # tsc 型チェック + vite build → dist/
 ```
