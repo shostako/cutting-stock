@@ -52,12 +52,26 @@ def solve_material(problem: Problem, *, time_limit: float | None = None) -> Solu
     )
 
 
-def solve(problem: Problem, *, time_limit: float | None = None) -> ParetoFrontier:
-    """公開エントリ. M1 は材料最適の単一点のみ返す（M3 で全パレート点に拡張）."""
-    sol = solve_material(problem, time_limit=time_limit)
-    return ParetoFrontier(
-        solutions=(sol,),
-        material_optimal_idx=0,
-        setup_optimal_idx=0,
-        recommended_index=0,
-    )
+def solve(
+    problem: Problem,
+    *,
+    mode: str = "pareto",
+    max_extra_bars: int = 3,
+    time_limit: float | None = None,
+) -> ParetoFrontier:
+    """公開エントリ.
+
+    mode="material": 材料最適の単一点のみ. mode="pareto": 材料軸×段取り軸のパレート前線.
+    """
+    if mode == "material":
+        sol = solve_material(problem, time_limit=time_limit)
+        return ParetoFrontier(
+            solutions=(sol,),
+            material_optimal_idx=0,
+            setup_optimal_idx=0,
+            recommended_index=0,
+        )
+    # 遅延 import で solve <-> pareto の循環を回避
+    from solver.pareto import solve_pareto
+
+    return solve_pareto(problem, max_extra_bars=max_extra_bars, time_limit=time_limit)

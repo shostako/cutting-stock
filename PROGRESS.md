@@ -19,7 +19,11 @@
   - ウルトラコード敵対検証（4攻撃面 + エージェント独自分）で**合計 ~14,259 + ~5,500 件**を突合。**arc-flow の normal-patterns 縮約による最適解の取りこぼしはゼロ**（bars_used が常に oracle/総当たり真最適と一致）＝縮約・フロー定式化・分解は健全。
   - 唯一の発見は**報告層のバグ**: `solve.py` の `proven_optimal` 判定が `mip_gap == 0.0` の厳密 float 比較で、LP下界が分数→HiGHS分枝時の machine-epsilon 残差（2e-16〜9e-14）を未証明と誤標記していた偽陰性。許容誤差 `< 1e-9`（`_GAP_TOL`）に修正。偽陰性インスタンスを回帰テストに昇格。
   - テスト 36件 green（smoke4 + material9 + oracle突合3 + 不変条件8 + proven_optimal回帰5 ほか）。
-- GUIは未着手。次は **M3 段取り軸 + パレート（ソロ）**: `setup_mip.py`（CP-SAT 設定モデルB）→ `pareto.py`（z*..z*+B 掃引・非劣点抽出）→ `solve()` を ParetoFrontier に拡張。
+- 2026-06-16: **M3 段取り軸 + パレート完了**。`setup_mip.py`（CP-SAT 設定モデルB: 固定本数バジェット下のパターン種類数の真の最小を証明）+ `pareto.py`（z*..z*+B を ε制約掃引・非劣点抽出）。`solve(mode=pareto|material)` を ParetoFrontier に拡張。
+  - 手検証トレードオフ例（L=8,{5:3,3:5}）で (z=4,P=2)→(z=5,P=1) を再現。実データでも z+1本で段取り4種→2種の解を提示。
+  - proven フラグ正直: 材料最適点のみ bars_proven=True、各点 setup_proven は P が証明済み最小か。
+  - テスト 43件 green（+ pareto 7件）。
+- GUIは未着手。次は **M4 API/CLI境界（ソロ）**: `api.py`（dict<->dataclass・segments前計算）+ `cli.py` + `http.py`(FastAPI)。入出力JSONスキーマ確定・エラーコード整備。
 
 ## 確定事項
 
@@ -40,9 +44,10 @@
 3. ~~M0 セットアップ。~~ → 完了。
 4. ~~M1 材料最適コア。~~ → 完了（arc-flow on HiGHS, gap=0, テスト13件 green）。
 5. ~~M2 正当性検証（ウルトラコード）。~~ → **PASS**（縮約の最適解取りこぼしゼロ／report層のfloat比較バグを1件修正）。
-6. **M3 段取り軸 + パレート（ソロ, 次にやる）**: `setup_mip.py`（CP-SAT 設定モデルB: パターン種類数の真の最小を証明）
-   → `pareto.py`（材料最適 z* を端点に z*..z*+B を ε制約掃引・非劣点抽出）→ `solve()` を ParetoFrontier に拡張。
-   `P_min` を小規模総当たりと照合。（以降 M4→M7 は `docs/SOLVER_DESIGN.md` 参照。**M7 がウルトラコード検証ゲート**）
+6. ~~M3 段取り軸 + パレート。~~ → 完了（setup_mip + pareto, 43テスト green, トレードオフ再現）。
+7. **M4 API/CLI境界（ソロ, 次にやる）**: `api.py`（唯一のJSON境界・dict<->dataclass・segments前計算）+ `cli.py`（stdin/stdout）
+   + `http.py`（FastAPI）。入出力JSONスキーマは `docs/SOLVER_DESIGN.md`「ローカルAPI」節に確定済み。エラーコード INFEASIBLE/PIECE_TOO_LONG/INVALID_INPUT。
+   （以降 M5 GUI → M6 複数長 → M7 最終レビュー。**M7 がウルトラコード検証ゲート**）
 
 検証の取りこぼし（M3前/M7で塞ぐと堅い、PASS判定のスコープ外）:
 - 大規模域（types>10, qty>25, ビン数>16）は oracle/総当たりが証明不能で未踏。縮約の正しさは規模非依存の構造性質なので PASS は保つ。
