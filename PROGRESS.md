@@ -23,7 +23,11 @@
   - 手検証トレードオフ例（L=8,{5:3,3:5}）で (z=4,P=2)→(z=5,P=1) を再現。実データでも z+1本で段取り4種→2種の解を提示。
   - proven フラグ正直: 材料最適点のみ bars_proven=True、各点 setup_proven は P が証明済み最小か。
   - テスト 43件 green（+ pareto 7件）。
-- GUIは未着手。次は **M4 API/CLI境界（ソロ）**: `api.py`（dict<->dataclass・segments前計算）+ `cli.py` + `http.py`(FastAPI)。入出力JSONスキーマ確定・エラーコード整備。
+- 2026-06-16: **M4 API/CLI境界完了**。`api.py`（唯一のJSON境界・dict<->dataclass・segments前計算）+ `cli.py`（stdin/stdout）+ `http.py`（FastAPI: /solve /validate /healthz）。
+  - 入出力JSONスキーマは SOLVER_DESIGN.md「ローカルAPI」節準拠。segments は length合計=stock_length（Model A整合）。エラーコード INFEASIBLE/PIECE_TOO_LONG/INVALID_INPUT。
+  - 依存追加: fastapi / uvicorn（runtime）、httpx（dev, TestClient用）。
+  - テスト 54件 green（+ api 11件: スキーマ/segments不変/エラー/CLI/HTTP TestClient）。
+- GUIは未着手。次は **M5 GUI（React+Vite, ソロ / GUIデザインは任意ウルトラ）**: 棒グラフ（segments描画）+ パレート散布図/スライダ + 解ごとメトリクス + proven/gap バッジ。`web/` に構築、http.py をローカルAPIとして接続。
 
 ## 確定事項
 
@@ -44,10 +48,11 @@
 3. ~~M0 セットアップ。~~ → 完了。
 4. ~~M1 材料最適コア。~~ → 完了（arc-flow on HiGHS, gap=0, テスト13件 green）。
 5. ~~M2 正当性検証（ウルトラコード）。~~ → **PASS**（縮約の最適解取りこぼしゼロ／report層のfloat比較バグを1件修正）。
-6. ~~M3 段取り軸 + パレート。~~ → 完了（setup_mip + pareto, 43テスト green, トレードオフ再現）。
-7. **M4 API/CLI境界（ソロ, 次にやる）**: `api.py`（唯一のJSON境界・dict<->dataclass・segments前計算）+ `cli.py`（stdin/stdout）
-   + `http.py`（FastAPI）。入出力JSONスキーマは `docs/SOLVER_DESIGN.md`「ローカルAPI」節に確定済み。エラーコード INFEASIBLE/PIECE_TOO_LONG/INVALID_INPUT。
-   （以降 M5 GUI → M6 複数長 → M7 最終レビュー。**M7 がウルトラコード検証ゲート**）
+6. ~~M3 段取り軸 + パレート。~~ → 完了（setup_mip + pareto, トレードオフ再現）。
+7. ~~M4 API/CLI境界。~~ → 完了（api/cli/http, 54テスト green）。サーバ起動: `uv run uvicorn solver.http:app`。
+8. **M5 GUI（React+Vite, ソロ / GUIデザインは任意ウルトラ, 次にやる）**: `web/` に構築。棒グラフ（segments描画）+
+   パレート散布図/スライダ + 解ごとメトリクス + proven/gap バッジ。`http.py` をローカルAPIとして接続。
+   （以降 M6 複数長 → M7 最終レビュー。**M7 がウルトラコード検証ゲート**）
 
 検証の取りこぼし（M3前/M7で塞ぐと堅い、PASS判定のスコープ外）:
 - 大規模域（types>10, qty>25, ビン数>16）は oracle/総当たりが証明不能で未踏。縮約の正しさは規模非依存の構造性質なので PASS は保つ。
