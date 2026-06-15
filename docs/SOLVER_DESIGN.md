@@ -70,7 +70,7 @@ solver/
 - `s_used[p] ∈ {0,1}`、`c[p,j] ∈ [0, L//w_j]`（パターン内容を自由変数化）、`n[p] ∈ [0, Nb]`。
 - 妥当パターン: `Σ_j w_j·c[p,j] ≤ L`。リンク: `s_used[p] ≤ n[p] ≤ Nb·s_used[p]`。
 - 本数バジェット: `Σ_p n[p] == Nb`（= パレート制御変数）。
-- 需要: `z[p,j] = AddMultiplicationEquality(n[p], c[p,j])`; `Σ_p z[p,j] ≥ d_j`。
+- 需要: `z[p,j] = add_multiplication_equality(n[p], c[p,j])`; `Σ_p z[p,j] ≥ d_j`。
 - 対称性破り: `s_used[p] ≥ s_used[p+1]`。スロット数 `R` = types を初期値、不足なら `2·types`。
 - 目的: `minimize Σ_p s_used[p]`。
 
@@ -138,9 +138,11 @@ selection-MIP に退避し、その点は「P ≤ k, gap付き上界」と明示
 
 ## 実装マイルストン（単一原材料長から、各Mでテスト緑を保ち冪等に積む）
 
-- **M0 セットアップ（ソロ）**: `uv add highspy ortools`。`flow_mip`/`setup_mip` に10行スモークテストを書き、
-  `highspy.addVariable`/`getInfo().mip_gap`・`cp_model.AddMultiplicationEquality` の API 実在を**本環境で裏取り**
-  （各審査の「実機検証済み」主張は別サンドボックスのもの。検証プロトコル順守）。`models.py` の dataclass 定義。
+- **M0 セットアップ（ソロ）** ✅ **完了（2026-06-16）**: `uv add highspy ortools` + dev pytest。`models.py` の dataclass 定義。
+  スモークテストで API 実在を**本環境で裏取り**済み（`solver/tests/test_smoke.py`, 4件 green）。確定事項:
+  - 採用バージョン: `highspy 1.14.0` / `ortools 9.15.6755` / Python 3.12.3 / uv 0.11.7。
+  - highspy 高レベル API（`addVariable(type=HighsVarType.kInteger)` / `addConstr` / `minimize` / `getModelStatus()==kOptimal` / `getInfo().mip_gap` / `val`）は設計想定どおり実在。
+  - **ortools は snake_case が正**（`new_int_var` / `add_multiplication_equality` / `solve` / `value` / `best_objective_bound` / `objective_value`）。PascalCase（`AddMultiplicationEquality` 等）は 9.15 で**非推奨**＝実装は snake_case を使う。
 - **M1 材料最適コア（ソロ）**: normalize → arcgraph（対称性破り含む）→ flow_mip → decompose。`solve()` が材料最適 Solution を返す。
   SPEC 検算例（L=2995, ℓ=990, k=10 → m=2）+ 小手計算で `bars_used` を手計算照合。
 - **M2 正当性検証（ウルトラコード）**: `oracle.py`（CP-SAT割当直接解）→ arc-flow×CP-SAT クロスチェックを CI 化。

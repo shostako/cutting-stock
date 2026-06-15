@@ -9,7 +9,9 @@
   - 材料軸 = Arc-flow MIP on HiGHS（gap=0証明）/ 段取り軸 = CP-SAT 設定モデルB（種類数の真の最小を証明）/ ε制約でパレート。
   - 敗者の CP-SAT 割当モデルを oracle.py に転用（arc-flow縮約のサイレント故障を CI で潰す保険）。
   - ユーザー確定: 2本立て(highspy+ortools) / 中小規模(列生成退路は仕込まない) / 常にgap=0まで粘る。
-- まだソルバ核のコードは無い（M0 セットアップが次）。GUIも未着手。
+- 2026-06-16: **M0 セットアップ完了**。`uv add highspy ortools` + dev pytest、`solver/models.py`（dataclass群）、`solver/tests/test_smoke.py`（4件 green）。
+  - 採用版: highspy 1.14.0 / ortools 9.15.6755 / Python 3.12.3。highspy高レベルAPIと CP-SAT（**snake_case が正**, PascalCaseは非推奨）の実在を本環境で裏取り済み。
+- GUIは未着手。次は **M1 材料最適コア**（normalize → arcgraph → flow_mip → decompose）。
 
 ## 確定事項
 
@@ -24,6 +26,7 @@
 次の一手:
 1. ~~カット代の数え方の定義を確定し `docs/SPEC.md` に追記。~~ → 完了（Model A 確定）。
 2. ~~ソルバの設計を詰める（ウルトラコード）。~~ → 完了（`docs/SOLVER_DESIGN.md` に確定）。
-3. **M0 セットアップ**: `uv add highspy ortools` → flow_mip/setup_mip に10行スモークテストを書き、
-   `highspy.addVariable`/`getInfo().mip_gap`・`cp_model.AddMultiplicationEquality` の API 実在を本環境で裏取り。
-   `models.py` の dataclass 定義。（以降 M1→M7 は `docs/SOLVER_DESIGN.md` のマイルストン参照。M2/M7 がウルトラコード検証ゲート）
+3. ~~M0 セットアップ。~~ → 完了。
+4. **M1 材料最適コア（単一原材料長）**: `normalize.py`（整数化・GCD縮約）→ `arcgraph.py`（arc-flowグラフ・対称性破り）
+   → `flow_mip.py`（HiGHS で min 使用本数, gap=0）→ `decompose.py`（フロー分解→Pattern列）。`solve()` が材料最適 Solution を返す。
+   SPEC検算例 + 小手計算で `bars_used` を手計算照合。（以降 M2→M7 は `docs/SOLVER_DESIGN.md` 参照。**M2/M7 がウルトラコード検証ゲート**）
