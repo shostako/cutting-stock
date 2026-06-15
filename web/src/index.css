@@ -1,0 +1,43 @@
+:root {
+  /* 業務トーン: オフホワイト背景・くすみ色・アクセント青1色 */
+  --bg: #f4f5f7;
+  --panel: #ffffff;
+  --ink: #1f2530;
+  --ink-soft: #5b6472;
+  --line: #dfe2e8;
+  --line-soft: #eceef2;
+  --accent: #2f6db0;
+  --accent-soft: #e8f0f8;
+  --ok: #2e7d52;
+  --ok-soft: #e3f1e9;
+  --warn: #b5710f;
+  --warn-soft: #f7eddb;
+
+  --mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-family: system-ui, "Segoe UI", "Hiragino Sans", "Noto Sans JP", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+h1, h2, h3 {
+  color: var(--ink);
+  font-weight: 600;
+  margin: 0;
+}
+
+input, button {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.tabular { font-variant-numeric: tabular-nums; }

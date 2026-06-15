@@ -27,7 +27,13 @@
   - 入出力JSONスキーマは SOLVER_DESIGN.md「ローカルAPI」節準拠。segments は length合計=stock_length（Model A整合）。エラーコード INFEASIBLE/PIECE_TOO_LONG/INVALID_INPUT。
   - 依存追加: fastapi / uvicorn（runtime）、httpx（dev, TestClient用）。
   - テスト 54件 green（+ api 11件: スキーマ/segments不変/エラー/CLI/HTTP TestClient）。
-- GUIは未着手。次は **M5 GUI（React+Vite, ソロ / GUIデザインは任意ウルトラ）**: 棒グラフ（segments描画）+ パレート散布図/スライダ + 解ごとメトリクス + proven/gap バッジ。`web/` に構築、http.py をローカルAPIとして接続。
+- 2026-06-16: **M5 GUI コア完成**（GUIデザインは事前にウルトラコードでコンペ→可視化ファースト基線に統合, `docs/GUI_DESIGN` 相当は workflow 結果）。
+  - `web/`: Vite+React+TS。チャートは全自前（棒=HTML絶対配置 width=len/L%で比率忠実・文字非歪み、散布図=SVG）。依存 react/react-dom のみ。
+  - 実装: InputPanel / ParetoChart（散布図+スライダ+◇◆スナップ+下界線+退化前線対応）/ MetricsCard / PatternView+PatternBar（segments帯・色凡例・kerf最小視認幅）/ OptimalityBadge（厳密最適/材料準最適/gap・正直表示）。
+  - dev proxy で http.py(:8000) に接続。フロントは本文 status/feasible で分岐。初期表示は実ソルバ出力フィクスチャ（バックエンド未起動でも全UI描画可）。
+  - 実バックエンド接続でスクショ確認済み（材料最適6本/1.81%/4種 ⇄ 段取り最少7本/8.21%/2種 をスライダ即切替）。tsc型チェック+viteビルド通過。
+  - **残: M5-5 比較モード（2解並置）/ M5-6 磨き（Intl整形・スナップ磁石・READMEの起動手順・狭幅前倒し）**。
+- 次の選択肢: M5 仕上げ（比較モード+磨き）/ M6 複数原材料長 / M7 最終レビュー（ウルトラコード）。
 
 ## 確定事項
 
@@ -50,9 +56,12 @@
 5. ~~M2 正当性検証（ウルトラコード）。~~ → **PASS**（縮約の最適解取りこぼしゼロ／report層のfloat比較バグを1件修正）。
 6. ~~M3 段取り軸 + パレート。~~ → 完了（setup_mip + pareto, トレードオフ再現）。
 7. ~~M4 API/CLI境界。~~ → 完了（api/cli/http, 54テスト green）。サーバ起動: `uv run uvicorn solver.http:app`。
-8. **M5 GUI（React+Vite, ソロ / GUIデザインは任意ウルトラ, 次にやる）**: `web/` に構築。棒グラフ（segments描画）+
-   パレート散布図/スライダ + 解ごとメトリクス + proven/gap バッジ。`http.py` をローカルAPIとして接続。
-   （以降 M6 複数長 → M7 最終レビュー。**M7 がウルトラコード検証ゲート**）
+8. ~~M5 GUI コア。~~ → 完成（Vite+React+TS, 自前チャート, パレート連動, 正直バッジ）。起動: 端末1 `uv run uvicorn solver.http:app --port 8000` / 端末2 `cd web && npm run dev`。
+   （Playwrightスクショ用に headless chromium + Noto CJK を環境に導入済み。`~/.cache/ms-playwright` に build1200→1228 symlink）
+9. **次の選択肢（ユーザー判断）**:
+   - M5仕上げ（M5-5 比較モード2解並置 / M5-6 Intl整形・READMEの起動手順・狭幅前倒し）
+   - M6 複数原材料長（arcgraphをL引数化しS並置・需要横断充足。**既定材料目的を要確認**）
+   - **M7 最終レビュー（ウルトラコード検証ゲート）**: 正確性・性能・エッジ・UIを次元分けで敵対検証
 
 検証の取りこぼし（M3前/M7で塞ぐと堅い、PASS判定のスコープ外）:
 - 大規模域（types>10, qty>25, ビン数>16）は oracle/総当たりが証明不能で未踏。縮約の正しさは規模非依存の構造性質なので PASS は保つ。
