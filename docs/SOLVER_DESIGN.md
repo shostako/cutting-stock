@@ -157,6 +157,32 @@ selection-MIP に退避し、その点は「P ≤ k, gap付き上界」と明示
   data model は `stock_length` + 将来の cost/available を見越し済み。M1 のテストが要素1退化で緑のままを回帰保証。
 - **M7 最終レビュー（ウルトラコード）**: 正確性・性能・エッジ・UI を次元分けで敵対検証。
 
+## M2 検証計画（ウルトラコード）— 復帰後はこの節を読んで workflow を撃つ
+
+> M1（材料軸 arc-flow on HiGHS）は実装・13件 green 済み。M2 のゴールは
+> **arc-flow の normal-patterns 縮約がサイレントに最適解を取りこぼしていないことを敵対的に証明**すること。
+> ここが本設計で最も信用できていない箇所。緑になるまで M3（段取り軸）に進まない。
+
+**実装物（ソロで先に置いてよい土台）**
+- `solver/oracle.py`: CP-SAT 割当モデル（per-bin: `use[b]∈{0,1}`, `x[b,j]∈{0..}`, 容量 `Σ w_j·x[b,j] ≤ L·use[b]`,
+  需要 `Σ_b x[b,j] ≥ d_j`, 対称性破り `use[b] ≥ use[b+1]`, `minimize Σ use[b]`）。小規模 ground-truth。
+  ビン数上限 `B` は FFD 上界（`bounds.ffd_initial`）で与える。snake_case API（`new_int_var`/`add`/`minimize`/`solve`/`value`）。
+- `solver/tests/test_oracle_crosscheck.py`: arc-flow と oracle の **使用本数（目的値）一致**を多数の小〜中インスタンスでアサート。
+- `solver/tests/test_invariants.py`: kerf 不変条件の property test（`Σℓ+m·k ≤ L`, `waste ≥ 0`, 総量保存 `z·L = Σℓ充足 + Σkerf + Σwaste`）。
+
+**ウルトラコードで敵対的にやること（workflow の fan-out 軸）**
+1. **ランダム突合**: シード違いで小〜中規模インスタンス（types≲12, L≲2000, qty≲30）を大量生成し、arc-flow == oracle を回す。
+   不一致が1件でも出れば縮約バグ＝最優先。各 worker が別レンジ/別シードを担当。
+2. **退化・境界入力**: 需要0近傍・単一type・全同寸・`ℓ+k` がちょうど L・`ℓ+k` が L+1（PIECE_TOO_LONG 経路）・
+   GCD=1 の互いに素幅（グラフ最大化）・kerf=0 と kerf 大。各ケースで例外/最適性/不変条件を確認。
+3. **既知最適ベンチ**: BPPLIB（Falkenauer U120/T60, Hard28）を kerf=0 のビンパッキングとして取り込み、公表最適と一致を確認。
+   データ取得不可なら、公表最適が分かる小インスタンスを埋め込みで代替（取りこぼしは log で明示）。
+4. **完全性クリティック**: 「未検証の縮約経路・未生成のインスタンス族はないか」を最後に1エージェントで洗う。
+
+**判定**: arc-flow ≠ oracle / 不変条件違反 / 既知最適との乖離 が出たら縮約 or 定式化のバグ。
+再現する最小インスタンスを特定 → `arcgraph`/`flow_mip` を修正 → 全突合が緑になるまで反復。
+緑なら「M2 ゲート通過」を PROGRESS に記録して M3 へ。
+
 ## 不採用と退路
 
 - **列生成 B&P を主筋**: OR-Tools にプライサ注入APIが無く看板倒れ（提案自身が weaknesses で実体は round-up+プール固定CP-SAT と白状）。
