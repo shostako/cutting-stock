@@ -42,11 +42,14 @@
 
 ## 次セッションへの引き継ぎ（最重要）
 
-**コンパクト直後の復帰手順（2026-06-16, M1完了時点で context compact 実施）:**
-1. `docs/SOLVER_DESIGN.md` を読む（SSOT, ハイブリッド設計＋実装マイルストン M0-M7）。M0/M1 は実装済み。
-2. 末尾の **「M2 検証計画（ウルトラコード）」節**がそのまま M2 の作業ブリーフ。これを workflow 化して撃つ。
-3. ユーザーは復帰後に **M2 をウルトラコードで実施**する意図（このターンで予告済み）。`続けて` 等の合図で M2 ウルトラコードを起動する。
-4. 実装基盤: `uv run pytest` で現状13件 green を確認してから着手。依存は highspy 1.14.0 / ortools 9.15.6755（snake_case API が正）。
+**コンパクト直後の復帰手順（2026-06-16, M5コア完了時点で context compact 実施・2回目）:**
+1. このファイル冒頭の「現在の状態」で M0-M5 の到達点を把握（ソルバ核M1-M3 はウルトラコード検証PASS, M4 API, M5 GUIコア 完了）。
+2. **ユーザーは選択肢「1」= M5仕上げ を選択済み**（比較モード+磨き）。`docs/GUI_DESIGN.md`「残作業」節が作業仕様。
+   - M5-5 比較モード（材料最適と段取り最少の2解を同一スケールで並置）→ M5-6 磨き。
+3. 健全性確認: `uv run pytest`（54件 green想定）/ `cd web && npm run build`（tsc+vite通過想定）。
+4. GUI起動・スクショ手順は `docs/GUI_DESIGN.md` 末尾。show-first（実装→スクショで見せる）で進める＝ユーザーは視覚判断型。
+5. 実装SSOT: ソルバ=`docs/SOLVER_DESIGN.md` / GUI=`docs/GUI_DESIGN.md`＋`web/`コード。依存 highspy1.14 / ortools9.15(snake_case) / fastapi / React+Vite。
+6. dev サーバはコンパクト前から背景稼働の可能性（:8000 uvicorn / :5173 vite）。落ちてたら GUI_DESIGN 末尾の手順で再起動。
 
 次の一手:
 1. ~~カット代の数え方の定義を確定し `docs/SPEC.md` に追記。~~ → 完了（Model A 確定）。
