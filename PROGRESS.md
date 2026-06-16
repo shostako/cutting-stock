@@ -34,7 +34,8 @@
   - 実バックエンド接続でスクショ確認済み（材料最適6本/1.81%/4種 ⇄ 段取り最少7本/8.21%/2種 をスライダ即切替）。tsc型チェック+viteビルド通過。
 - 2026-06-16: **M5 全完了**。M5-5 比較モード（材料最適と段取り最少を同一スケールで2レーン並置・共有凡例・狭幅縦積み）+ M5-6 磨き（stale淡色化バナー・Intl整形・未使用Vite初期アセット削除・web/README起動手順）。スクショ確認済み。tsc+viteビルド通過。
   - スナップ磁石吸着は設計どおり後回し（初版は最近接クリック+整数スライダ）。
-- 次の選択肢: M6 複数原材料長 / M7 最終レビュー（ウルトラコード）。
+- 2026-06-16: **スレッドA = GitHub 連携 完了**。ブランチ `master→main` リネーム、MIT `LICENSE` + ルート `README.md` 追加、`gh repo create --public` で https://github.com/shostako/cutting-stock に push。default=main / visibility=PUBLIC / license=mit 確認済み。`origin/main` 追跡。
+- 次の選択肢: スレッドB スマホ用デプロイ / スレッドC M6 複数原材料長 / M7 最終レビュー（ウルトラコード）。
 
 ## 確定事項
 
@@ -45,9 +46,9 @@
 
 **コンパクト直後の復帰手順（2026-06-16, M5全完了・整理フェーズで context compact 実施・3回目）:**
 - **M0-M5 全完了**（ソルバ核M1-M3 ウルトラコードPASS / M4 API / M5 GUI 比較モード・磨き含む）。エンドツーエンドで動く。コミット12本・master・クリーン。テスト54件 green。
-- ユーザーは「整理」のため一旦停止。**未着手の3スレッド、推奨順 A→B→C**:
-  - **A: GitHub に push** — 現在 remote 無し。`gh` は shostako で認証済み。**要確認: public/private**（兄弟 mold-flow-sim=MIT public, mid=private）。ブランチ master→main に直すか。軽い。
-  - **B: スマホ用デプロイ** — React+FastAPI の2層。推奨筋=**FastAPI が build済みフロント(静的)も配信する単一サーバ化** → Render/Railway/Fly に1個デプロイ（CORS不要・GUIは狭幅1カラム対応済み）。highspy/ortools はネイティブwheelで重く無料枠次第。ホスティング選定が要る。Aが前提だと楽。
+- ユーザーは「整理」のため一旦停止。**残スレッド、推奨順 B→C**:
+  - **A: GitHub に push** — ✅完了（public/MIT, main, https://github.com/shostako/cutting-stock）。
+  - **B: スマホ用デプロイ** — React+FastAPI の2層。推奨筋=**FastAPI が build済みフロント(静的)も配信する単一サーバ化** → Render/Railway/Fly に1個デプロイ（CORS不要・GUIは狭幅1カラム対応済み）。highspy/ortools はネイティブwheelで重く無料枠次第。**要確認: ホスティング選定**。Aが済んだので連携は楽。
   - **C: M6 複数原材料長** — 重い。確定方針は `docs/SOLVER_DESIGN.md` M6 節（材料目的=総廃棄最小 / 在庫上限+無制限両対応 / 段取り軸もフル / API要素1後方互換）。**ユーザー指示: M6でエラーになったら捨てて次へ、深追いしない。**
 - 健全性確認: `uv run pytest`（54件） / `cd web && npm run build`。dev サーバ背景稼働の可能性（:8000/:5173, 落ちてたら `docs/GUI_DESIGN.md` 末尾手順で再起動）。
 - 実装SSOT: ソルバ=`docs/SOLVER_DESIGN.md` / GUI=`docs/GUI_DESIGN.md`＋`web/`。依存 highspy1.14 / ortools9.15(snake_case) / fastapi / React+Vite。
