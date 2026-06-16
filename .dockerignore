@@ -1,0 +1,13 @@
+# ビルドコンテキストから除外（イメージに不要・コンテナ内で再生成するもの）
+.git
+.gitignore
+.venv/
+**/__pycache__/
+**/*.py[cod]
+.pytest_cache/
+.ruff_cache/
+web/node_modules/
+web/dist/
+.claude/
+logs/
+*.log

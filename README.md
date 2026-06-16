@@ -1,4 +1,16 @@
+---
+title: Cutting Stock
+emoji: 📏
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # cutting-stock
+
+> 上の YAML は [Hugging Face Spaces](https://huggingface.co/docs/hub/spaces-config-reference) 用の設定。GitHub では無視してよい。
 
 1次元カッティングストック問題（1D Cutting Stock Problem）を最適／準最適で解く再利用ツール。
 
@@ -50,6 +62,25 @@ echo '{"stock":{"length":2995,"kerf":10},"demand":[{"length":990,"qty":5}]}' | u
 - [`docs/SOLVER_DESIGN.md`](docs/SOLVER_DESIGN.md) — ソルバ核の確定設計（SSOT）
 - [`docs/GUI_DESIGN.md`](docs/GUI_DESIGN.md) — GUI の確定設計（SSOT）
 - [`docs/PLAN.md`](docs/PLAN.md) — ビルド方針・技術スタック
+
+## デプロイ（Hugging Face Spaces）
+
+`Dockerfile` が単一サーバ（FastAPI が build済みフロントを同一オリジン配信）をそのまま起動する。
+Hugging Face Spaces の Docker SDK で動かす想定（README 冒頭の frontmatter が Space 設定）。
+
+```sh
+# Space を作成（初回のみ。要 HF アカウント / トークン）
+pip install -U huggingface_hub
+hf auth login
+hf repo create cutting-stock --repo-type space --space_sdk docker
+
+# Space を git remote に追加して push（以後はこれで再デプロイ）
+git remote add space https://huggingface.co/spaces/<user>/cutting-stock
+git push space main
+```
+
+push すると HF 側で Docker をビルドし、`https://<user>-cutting-stock.hf.space` で公開される（スマホ可）。
+ローカルで Docker を試すなら `docker build -t cutting-stock . && docker run -p 7860:7860 cutting-stock`。
 
 ## ライセンス
 
