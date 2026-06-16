@@ -35,7 +35,9 @@
 - 2026-06-16: **M5 全完了**。M5-5 比較モード（材料最適と段取り最少を同一スケールで2レーン並置・共有凡例・狭幅縦積み）+ M5-6 磨き（stale淡色化バナー・Intl整形・未使用Vite初期アセット削除・web/README起動手順）。スクショ確認済み。tsc+viteビルド通過。
   - スナップ磁石吸着は設計どおり後回し（初版は最近接クリック+整数スライダ）。
 - 2026-06-16: **スレッドA = GitHub 連携 完了**。ブランチ `master→main` リネーム、MIT `LICENSE` + ルート `README.md` 追加、`gh repo create --public` で https://github.com/shostako/cutting-stock に push。default=main / visibility=PUBLIC / license=mit 確認済み。`origin/main` 追跡。
-- 次の選択肢: スレッドB スマホ用デプロイ / スレッドC M6 複数原材料長 / M7 最終レビュー（ウルトラコード）。
+- 2026-06-16: **スレッドB = スマホ用デプロイ 完了**。単一サーバ化（`http.py` が web/dist を存在時にルート mount、相対パスfetchで同一オリジン・CORS不要、dev時は mount せず vite proxy）+ `Dockerfile`（node build→python, uid1000, port7860）+ `.dockerignore`。**Hugging Face Spaces（Docker SDK, public, cpu-basic）にデプロイ**: https://huggingface.co/spaces/shostako/cutting-stock 、公開URL **https://shostako-cutting-stock.hf.space** （スマホ可）。git remote `space` 追加済み（再デプロイ= `git push space main`、HFトークンは `~/.cache/huggingface/token` に保持）。本番で `/healthz`（両ソルバload）・`/solve`（材料最適6本/1.81%/4種＝ローカル一致）・390px描画 確認済み。
+  - HF用 frontmatter は README 冒頭に記載（GitHubはメタ表示するが無害）。トークンは Write 権限の `cutting-stock-deploy`（不要なら HF settings で revoke 可）。
+- 次の選択肢: スレッドC M6 複数原材料長 / M7 最終レビュー（ウルトラコード）。
 
 ## 確定事項
 
@@ -46,10 +48,11 @@
 
 **コンパクト直後の復帰手順（2026-06-16, M5全完了・整理フェーズで context compact 実施・3回目）:**
 - **M0-M5 全完了**（ソルバ核M1-M3 ウルトラコードPASS / M4 API / M5 GUI 比較モード・磨き含む）。エンドツーエンドで動く。コミット12本・master・クリーン。テスト54件 green。
-- ユーザーは「整理」のため一旦停止。**残スレッド、推奨順 B→C**:
+- **残スレッド C のみ**:
   - **A: GitHub に push** — ✅完了（public/MIT, main, https://github.com/shostako/cutting-stock）。
-  - **B: スマホ用デプロイ** — React+FastAPI の2層。推奨筋=**FastAPI が build済みフロント(静的)も配信する単一サーバ化** → Render/Railway/Fly に1個デプロイ（CORS不要・GUIは狭幅1カラム対応済み）。highspy/ortools はネイティブwheelで重く無料枠次第。**要確認: ホスティング選定**。Aが済んだので連携は楽。
+  - **B: スマホ用デプロイ** — ✅完了（HF Spaces, https://shostako-cutting-stock.hf.space 稼働中。再デプロイ= `git push space main`）。
   - **C: M6 複数原材料長** — 重い。確定方針は `docs/SOLVER_DESIGN.md` M6 節（材料目的=総廃棄最小 / 在庫上限+無制限両対応 / 段取り軸もフル / API要素1後方互換）。**ユーザー指示: M6でエラーになったら捨てて次へ、深追いしない。**
+- 注意: HF Space は `origin/main`（GitHub）と同期させたい。**コード変更時は `git push origin main && git push space main` の両方**（HF push でリビルド走る。docのみ変更はHF push不要）。
 - 健全性確認: `uv run pytest`（54件） / `cd web && npm run build`。dev サーバ背景稼働の可能性（:8000/:5173, 落ちてたら `docs/GUI_DESIGN.md` 末尾手順で再起動）。
 - 実装SSOT: ソルバ=`docs/SOLVER_DESIGN.md` / GUI=`docs/GUI_DESIGN.md`＋`web/`。依存 highspy1.14 / ortools9.15(snake_case) / fastapi / React+Vite。
 
