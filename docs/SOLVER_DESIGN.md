@@ -157,8 +157,15 @@ selection-MIP に退避し、その点は「P ≤ k, gap付き上界」と明示
 - **M4 API/CLI境界（ソロ）**: `api.py` + segments前計算 + `cli.py` + `http.py`(FastAPI)。入出力JSONスキーマ確定。エラーコード整備。
 - **M5 GUI（React+Vite, ソロ / GUI設計は任意ウルトラ）**: 棒グラフ + パレート散布図/スライダ + メトリクス + Optimality バッジ。
 - **M6 複数原材料長拡張（段階・後続）**: arcgraph を L 引数化のまま S回呼びグラフ並置＋需要横断充足。
-  ※複数長では「本数最小 / 廃棄最小 / コスト最小」が分離する（数学的事実）。**既定の材料目的は M6 着手時に別途確定**（要ユーザー判断）。
   data model は `stock_length` + 将来の cost/available を見越し済み。M1 のテストが要素1退化で緑のままを回帰保証。
+  **ユーザー確定方針（2026-06-16）:**
+  - 材料目的 = **総廃棄（材料量）最小** = `min Σ_s (L_s × 使用本数_s)`（材料軸の重み w_s = L_s。単一長なら本数最小に退化）。
+  - 原材料制約 = **在庫上限あり ＋ 無制限の両対応**（各 stock に `available: int|None`。None=無制限、整数=`Σ flow(source_s) ≤ available_s`）。
+  - スコープ = **段取り軸・パレートもフル複数長対応**（setup_mip の各スロットに stock 選択を追加: `stock_of[p]` か stock別 c[p,s,j]、容量はその stock の L_s）。
+  - 実装方針: `StockSpec` を複数 stock のリスト（length/kerf/available/cost?）に拡張 or 新 `StockOption`。kerf は全 stock 共通（同一saw）前提で実効幅 w_j=ℓ_j+k は不変、GCD g=gcd(w_j) を共有し各 stock 容量 W'_s=L_s//g。
+  - flow_mip: stock 種ごとに arc グラフを作り、各源 source_s から出るフローに重み w_s を掛けて目的に。需要は全グラフ横断で `Σ_s Σ item-j弧フロー ≥ d_j`。
+  - **入力 API は要素1で後方互換**（`stock:{length,kerf}` → `stocks:[{length,kerf,available,cost}]`、単一要素で現行同等）。
+  - ※「M6 が難しくエラーになったら（次にエラーになったら）M6 は捨てて次のステップへ」とユーザー指示済み。深追いしない。
 - **M7 最終レビュー（ウルトラコード）**: 正確性・性能・エッジ・UI を次元分けで敵対検証。
 
 ## M2 検証計画（ウルトラコード）— 復帰後はこの節を読んで workflow を撃つ

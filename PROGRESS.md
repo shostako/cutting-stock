@@ -43,14 +43,14 @@
 
 ## 次セッションへの引き継ぎ（最重要）
 
-**コンパクト直後の復帰手順（2026-06-16, M5コア完了時点で context compact 実施・2回目）:**
-1. このファイル冒頭の「現在の状態」で M0-M5 の到達点を把握（ソルバ核M1-M3 はウルトラコード検証PASS, M4 API, M5 GUIコア 完了）。
-2. **ユーザーは選択肢「1」= M5仕上げ を選択済み**（比較モード+磨き）。`docs/GUI_DESIGN.md`「残作業」節が作業仕様。
-   - M5-5 比較モード（材料最適と段取り最少の2解を同一スケールで並置）→ M5-6 磨き。
-3. 健全性確認: `uv run pytest`（54件 green想定）/ `cd web && npm run build`（tsc+vite通過想定）。
-4. GUI起動・スクショ手順は `docs/GUI_DESIGN.md` 末尾。show-first（実装→スクショで見せる）で進める＝ユーザーは視覚判断型。
-5. 実装SSOT: ソルバ=`docs/SOLVER_DESIGN.md` / GUI=`docs/GUI_DESIGN.md`＋`web/`コード。依存 highspy1.14 / ortools9.15(snake_case) / fastapi / React+Vite。
-6. dev サーバはコンパクト前から背景稼働の可能性（:8000 uvicorn / :5173 vite）。落ちてたら GUI_DESIGN 末尾の手順で再起動。
+**コンパクト直後の復帰手順（2026-06-16, M5全完了・整理フェーズで context compact 実施・3回目）:**
+- **M0-M5 全完了**（ソルバ核M1-M3 ウルトラコードPASS / M4 API / M5 GUI 比較モード・磨き含む）。エンドツーエンドで動く。コミット12本・master・クリーン。テスト54件 green。
+- ユーザーは「整理」のため一旦停止。**未着手の3スレッド、推奨順 A→B→C**:
+  - **A: GitHub に push** — 現在 remote 無し。`gh` は shostako で認証済み。**要確認: public/private**（兄弟 mold-flow-sim=MIT public, mid=private）。ブランチ master→main に直すか。軽い。
+  - **B: スマホ用デプロイ** — React+FastAPI の2層。推奨筋=**FastAPI が build済みフロント(静的)も配信する単一サーバ化** → Render/Railway/Fly に1個デプロイ（CORS不要・GUIは狭幅1カラム対応済み）。highspy/ortools はネイティブwheelで重く無料枠次第。ホスティング選定が要る。Aが前提だと楽。
+  - **C: M6 複数原材料長** — 重い。確定方針は `docs/SOLVER_DESIGN.md` M6 節（材料目的=総廃棄最小 / 在庫上限+無制限両対応 / 段取り軸もフル / API要素1後方互換）。**ユーザー指示: M6でエラーになったら捨てて次へ、深追いしない。**
+- 健全性確認: `uv run pytest`（54件） / `cd web && npm run build`。dev サーバ背景稼働の可能性（:8000/:5173, 落ちてたら `docs/GUI_DESIGN.md` 末尾手順で再起動）。
+- 実装SSOT: ソルバ=`docs/SOLVER_DESIGN.md` / GUI=`docs/GUI_DESIGN.md`＋`web/`。依存 highspy1.14 / ortools9.15(snake_case) / fastapi / React+Vite。
 
 次の一手:
 1. ~~カット代の数え方の定義を確定し `docs/SPEC.md` に追記。~~ → 完了（Model A 確定）。
