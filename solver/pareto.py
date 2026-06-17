@@ -13,9 +13,10 @@ from solver.solve import solve_material
 
 
 def _build_solution(problem: Problem, z: int, z_star: int, base: Solution, setup) -> Solution:
-    L, k = problem.stock.length, problem.stock.kerf
-    occupancy = sum(p.used(k) * p.run_count for p in setup.patterns)
-    total_waste = z * L - occupancy
+    L = problem.stock.length
+    # 廃棄量 = z·L − 総需要長（SPEC.md:52, z に単調）. 過剰生産ピースは占有でなく廃棄に計上する（M7 bug#2）.
+    demand_length = sum(it.length * it.qty for it in problem.demand)
+    total_waste = z * L - demand_length
     waste_ratio = (total_waste / (z * L)) if z > 0 else 0.0
     optimality = Optimality(
         status=setup.status,

@@ -27,9 +27,12 @@ def solve_material(problem: Problem, *, time_limit: float | None = None) -> Solu
     patterns = decompose(graph, flow, norm.stock_length, norm.kerf)
 
     z = flow.bars
-    L, k = norm.stock_length, norm.kerf
-    occupancy = sum(p.used(k) * p.run_count for p in patterns)
-    total_waste = z * L - occupancy
+    L = norm.stock_length
+    # 廃棄量は SPEC.md:52 の定義: z·L − 総需要長（kerf・端材・過剰生産を含み, z に対し単調）.
+    # 過剰生産ピースを占有として計上すると z 増で廃棄が減る非単調が起きる（M7 bug#2）ため、
+    # 占有合計でなく「需要された長さ」だけを差し引く.
+    demand_length = sum(it.length * it.qty for it in problem.demand)
+    total_waste = z * L - demand_length
     waste_ratio = (total_waste / (z * L)) if z > 0 else 0.0
 
     proven = flow.status == "Optimal" and flow.mip_gap < _GAP_TOL

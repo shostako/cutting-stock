@@ -203,6 +203,61 @@ selection-MIP に退避し、その点は「P ≤ k, gap付き上界」と明示
 - **SCIP/pyscipopt**: arc-flow/CP-SAT併用で B&P 不要。ビルド/ライセンス管理コストをソロで負う理由が消えた。
 - **重み付き和パレート**: λ感度が高く非凸前線の隅を取りこぼす。整数zの狭い値域では ε制約（整数掃引）が漏れなく優れる。
 
+## M7 最終レビュー結果（2026-06-17, ウルトラコード）
+
+6次元（材料軸 / 段取り軸+パレート / エッジ境界 / API契約 / 性能・数値 / GUI）を並列レビューし、各 finding を
+敵対 verify → 統合（run `wf_9604ac3b-767`, 28エージェント）。総 finding 21、敵対 verify 後の確定バグ 9（root cause 束ね後）。
+
+**核の健全性**: 材料最適性と Model A 不変量（waste≥0 / 占有≤L / セグメント和=L）を **400+388 インスタンスの
+クロスチェックで違反ゼロ**。arc-flow 縮約のサイレント故障は出ていない＝M2 の PASS は規模を上げても保たれる。
+FAIL 判定の実体は計算の誤りでなく「JSON 境界の入力検証」「タイムアウト時の劣化処理」「廃棄量メトリクスの計上」に集中。
+
+### 修正済み
+
+- **bug#2 廃棄量メトリクス反転（high, 既定パレート経路で発火）** → 修正済み（`pareto.py` / `solve.py`）。
+  過剰生産ピースを占有計上していたため z 増で廃棄が減る非単調が起きていた。SPEC.md:52 の定義
+  `total_waste = z·L − 総需要長`（kerf・端材・過剰生産を含み z に単調）に統一。回帰 `test_pareto_waste_monotonic_spec52` 追加。
+  - 注: synthesis の提案（delivered − consumed_kerf 方式）は kerf を produced 依存で差し引くため単調性を完全には
+    回復しない。SPEC.md:52 の `z·L − 総需要長` が SSOT かつ厳密単調なのでそちらを採用した。
+
+### 未修正（ユーザー判断 2026-06-17: 既定GUI正常系では発火しない off-default パスのため文書化のみ）
+
+いずれも「外部から JSON API に異常値を投げる」「非整数/非有限 float を渡す」「不正オプションを渡す」経路で、
+既定 GUI 操作（整数入力・time_limit=null 無制限・max_extra_bars=3）では到達しない。将来直すときの地図として残す。
+
+| # | sev | 症状 | 所在 | トリガ |
+|---|---|---|---|---|
+| 1 | high | time_limit 到達で incumbent 無しのとき `round(+inf)` → OverflowError が api/CLI/HTTP を未捕捉貫通 | flow_mip.py:92 | `time_limit_sec=0`（HiGHS では 0=即timeout） |
+| 3 | high | 非整数 float の黙示 floor → kerf 切り捨てで PIECE_TOO_LONG をすり抜け「入らない切り方」を waste=0 で受理 | api.py parse_problem の int() | `kerf=10.9` 等 |
+| 4 | high | 不正オプションが生例外で HTTP500/CLI トレースバック（契約 {status:ERROR} 違反） | api.py:131-135（try外） | `max_extra_bars='abc'`/None, `time_limit_sec='x'` |
+| 5 | high | 負の max_extra_bars で status=OK・空フロント・idx=-1 → consumer IndexError | pareto.py:45,61-64 / api.py:132 | `max_extra_bars=-1` |
+| 6 | med | float ±inf が except をすり抜け OverflowError 貫通（NaN は偶然捕捉） | api.py:33 | `kerf=Infinity` |
+| 7 | med | 段取り軸タイムアウト時、材料バッジが「gap 0.0%（上界）」と自己矛盾表示し証明済み緑を握りつぶす | OptimalityBadge.tsx:5 / pareto.py:22,26 | 有限 time_limit + 段取り timeout |
+| 8 | low | proven_optimal の二重裏取り leg(b)（z_int≥⌈z_LP⌉）を計算するが enforce しない（実答は常に正しく防御網のみ欠落） | solve.py:35 | （発火せず） |
+| 9 | low | 不正/大小文字違いの mode を黙って pareto 扱い。doc 記載の 'setup' モードが独立挙動として存在しない | api.py:131 / solve.py:66 | doc-vs-code 不整合 |
+
+一括修正するなら #3〜#6 は同一 family（境界の未検証/不正 coercion）で api.py の数十行に集約でき、契約
+（必ず {status:ERROR} 包絡・CLI/HTTP 振る舞い一致）を回復できる。#1 は flow_mip の round 前 status 分岐＋isfinite ガード。
+#7 はフロント判定順を proven_optimal 優先に並べ替え。#8/#9 は防御網/doc 整合で任意。
+
+### 本質的限界（修正不要・設計スコープ）
+
+- arc-flow グラフは擬多項式構築のため L 大＋互いに素幅で item_arcs が二次膨張（実測 L=20000・coprime で ≈4.3M / 0.64s）。
+  中小規模スコープ（L=数千mm）内では問題なし。L が万単位に増えるとメモリ/構築時間が支配的になる。
+- 1D-CSP は NP 困難で大規模では time_limit 到達が原理的に起こりうる（到達時のクラッシュは限界でなく #1 の実装欠陥）。
+  証明付き最適は中小規模前提、大規模では timed_out 上界解になりうる。
+- INFEASIBLE は単一原材料長では到達不能（ℓ+k≤L なら必ず自分のビンに入る／超えれば PIECE_TOO_LONG）。
+  M6 複数長で初めて producer が現れる前方足場＝現状は予約コード。
+- 過剰生産（Σ≥d）自体は M2 オラクル相互チェックの構造要件で意図的（#2 のメトリクス計上ミスとは別問題）。
+
+### 残るカバレッジギャップ（M7 でも未踏）
+
+- HTTP 層の実トラフィック挙動（FastAPI RequestValidationError ハンドラ有無・並行リクエスト・HF Spaces 環境固有のタイムアウト/プロキシ）。
+- 実業務想定の最大規模（多種長×大需要×L大）での解品質・solve 時間・メモリ・time_limit 上界解の gap 実分布。
+- フロント実ブラウザの全ユーザーフロー E2E（スライダ→再solve→比較トグル→再描画）と空フロント/エラー応答受信時の UI 挙動。
+- CLI 入力堅牢性（標準入力ストリーミング・巨大ペイロード・部分 JSON・文字エンコーディング境界）。
+- 性能次元の review エージェントは socket 切れで 1 個脱落（28中1）。上記の性能関連は他次元＋統合が部分的に拾ったが、最大規模の実測だけは未実施。
+
 ## 先送り事項（既定で進め、見えた段階で再判断）
 
 - パレート掃引幅 `B`: 既定 **3**（GUI可変）。中小規模なら拡げても安価。

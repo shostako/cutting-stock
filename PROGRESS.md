@@ -37,7 +37,10 @@
 - 2026-06-16: **スレッドA = GitHub 連携 完了**。ブランチ `master→main` リネーム、MIT `LICENSE` + ルート `README.md` 追加、`gh repo create --public` で https://github.com/shostako/cutting-stock に push。default=main / visibility=PUBLIC / license=mit 確認済み。`origin/main` 追跡。
 - 2026-06-16: **スレッドB = スマホ用デプロイ 完了**。単一サーバ化（`http.py` が web/dist を存在時にルート mount、相対パスfetchで同一オリジン・CORS不要、dev時は mount せず vite proxy）+ `Dockerfile`（node build→python, uid1000, port7860）+ `.dockerignore`。**Hugging Face Spaces（Docker SDK, public, cpu-basic）にデプロイ**: https://huggingface.co/spaces/shostako/cutting-stock 、公開URL **https://shostako-cutting-stock.hf.space** （スマホ可）。git remote `space` 追加済み（再デプロイ= `git push space main`、HFトークンは `~/.cache/huggingface/token` に保持）。本番で `/healthz`（両ソルバload）・`/solve`（材料最適6本/1.81%/4種＝ローカル一致）・390px描画 確認済み。
   - HF用 frontmatter は README 冒頭に記載（GitHubはメタ表示するが無害）。トークンは Write 権限の `cutting-stock-deploy`（不要なら HF settings で revoke 可）。
-- 次の選択肢: スレッドC M6 複数原材料長 / M7 最終レビュー（ウルトラコード）。
+- 2026-06-17: **M7 最終レビュー（ウルトラコード）完了**。6次元並列レビュー→敵対verify→統合（run `wf_9604ac3b-767`, 28エージェント, finding21 / 確定バグ9）。**ソルバ核は健全**＝材料最適性・Model A不変量（waste≥0/占有≤L/セグメント和=L）を 400+388 インスタンスで違反ゼロ。判定FAILの実体は計算誤りでなく「JSON境界の入力検証・タイムアウト劣化・廃棄量計上」。
+  - **bug#2 廃棄量メトリクス反転（既定パレート経路で発火）を修正**: 過剰生産ピースの占有計上で z 増→廃棄減の非単調（SPEC.md:52違反）だったのを `z·L − 総需要長`（kerf・端材・過剰生産含み z に単調）に統一（`solve.py`/`pareto.py`）。回帰 `test_pareto_waste_monotonic_spec52` 追加、テスト55件 green。
+  - 残り確定バグ8件（全て off-default パス＝異常入力/不正オプション、既定GUIでは未発火）＋本質的限界＋カバレッジギャップは `docs/SOLVER_DESIGN.md`「M7最終レビュー結果」節に文書化。**ユーザー判断 2026-06-17: #2のみ修正、残りは文書化のみ。**
+- 次の選択肢: スレッドC M6 複数原材料長（据え置き決定）/ 現状で一区切り。
 
 ## 確定事項
 
@@ -46,12 +49,12 @@
 
 ## 次セッションへの引き継ぎ（最重要）
 
-**コンパクト直後の復帰手順（2026-06-16, M5全完了・整理フェーズで context compact 実施・3回目）:**
-- **M0-M5 全完了**（ソルバ核M1-M3 ウルトラコードPASS / M4 API / M5 GUI 比較モード・磨き含む）。エンドツーエンドで動く。コミット12本・master・クリーン。テスト54件 green。
-- **残スレッド C のみ**:
-  - **A: GitHub に push** — ✅完了（public/MIT, main, https://github.com/shostako/cutting-stock）。
+**復帰手順（2026-06-17, M0-M5完了 + M7最終レビュー完了。M6のみ据え置き）:**
+- **M0-M5 全完了 + M7 完了**。エンドツーエンドで動く・本番稼働中。テスト55件 green。
+  - **A: GitHub push** — ✅完了（public/MIT, main, https://github.com/shostako/cutting-stock）。
   - **B: スマホ用デプロイ** — ✅完了（HF Spaces, https://shostako-cutting-stock.hf.space 稼働中。再デプロイ= `git push space main`）。
-  - **C: M6 複数原材料長** — 重い。確定方針は `docs/SOLVER_DESIGN.md` M6 節（材料目的=総廃棄最小 / 在庫上限+無制限両対応 / 段取り軸もフル / API要素1後方互換）。**ユーザー指示: M6でエラーになったら捨てて次へ、深追いしない。**
+  - **M7 最終レビュー（ウルトラコード）** — ✅完了（2026-06-17）。ソルバ核健全、bug#2のみ修正、残り8件は off-default パスとして文書化。詳細 `docs/SOLVER_DESIGN.md`「M7最終レビュー結果」節（未修正バグの所在表＝将来直すときの地図）。
+  - **C: M6 複数原材料長** — **据え置き（ユーザー決定 2026-06-17: 締めに回す）**。再開するなら確定方針は `docs/SOLVER_DESIGN.md` M6 節（材料目的=総廃棄最小 / 在庫上限+無制限両対応 / 段取り軸もフル / API要素1後方互換）。**ユーザー指示: M6でエラーになったら捨てて次へ、深追いしない。**
 - 注意: HF Space は `origin/main`（GitHub）と同期させたい。**コード変更時は `git push origin main && git push space main` の両方**（HF push でリビルド走る。docのみ変更はHF push不要）。
 - 健全性確認: `uv run pytest`（54件） / `cd web && npm run build`。dev サーバ背景稼働の可能性（:8000/:5173, 落ちてたら `docs/GUI_DESIGN.md` 末尾手順で再起動）。
 - 実装SSOT: ソルバ=`docs/SOLVER_DESIGN.md` / GUI=`docs/GUI_DESIGN.md`＋`web/`。依存 highspy1.14 / ortools9.15(snake_case) / fastapi / React+Vite。

@@ -85,10 +85,34 @@ def test_pareto_invariants_on_kerf_instance() -> None:
         for pat in s.patterns:
             assert pat.used(k) <= L
             assert pat.waste(k) >= 0
-        assert s.bars_used * L == sum(pat.used(k) * pat.run_count for pat in s.patterns) + s.total_waste
+        # 物理保存: 占有 + 端材 = 原材料総量（total_waste は SPEC:52 で別途検証）
+        assert s.bars_used * L == sum(
+            (pat.used(k) + pat.waste(k)) * pat.run_count for pat in s.patterns
+        )
+        assert s.total_waste == s.bars_used * L - sum(it.length * it.qty for it in p.demand)
 
 
 def test_solve_mode_material_single_point() -> None:
     front = solve(TRADEOFF, mode="material", time_limit=15.0)
     assert len(front.solutions) == 1
     assert front.solutions[0].bars_used == 4
+
+
+def test_pareto_waste_monotonic_spec52() -> None:
+    """M7 bug#2 回帰: 廃棄量は本数 z に単調非減少（SPEC.md:52, z·L−総需要長）.
+
+    TRADEOFF は z=5 で 5 を 2 本過剰生産する。旧実装は過剰生産ピースを占有計上したため
+    z=5 の廃棄を 0 と誤り、z=4 の 2 より小さい非単調値を出していた。新定義では z 単調.
+    """
+    front = solve(TRADEOFF, mode="pareto", max_extra_bars=3, time_limit=15.0)
+    L = TRADEOFF.stock.length
+    demand_length = sum(it.length * it.qty for it in TRADEOFF.demand)
+    prev = None
+    for s in front.solutions:
+        assert s.total_waste == s.bars_used * L - demand_length
+        if prev is not None:
+            assert s.total_waste >= prev, "廃棄量は z 増で単調非減少（SPEC.md:52）"
+        prev = s.total_waste
+    by_z = {s.bars_used: s.total_waste for s in front.solutions}
+    assert by_z[4] == 2                      # 4·8 − 30
+    assert by_z[5] == 10                     # 5·8 − 30（旧実装は過剰生産計上で 0 だった）
