@@ -1,13 +1,14 @@
-"""段取り軸: パターン種類数の最小化 = CP-SAT 設定モデルB.
+"""段取り軸: ちょうど bars 本で需要を満たす最小パターン種類数 P を求める.
 
-物理ビンでなく「パターンスロット」を変数化する（候補プール非依存＝種類数の真の最小を証明できる）。
-固定の本数バジェット Nb（= 使用本数 z）の下で、需要を満たす最小の異なるパターン種類数 P を求める.
-
-スロット p:
-  s_used[p]∈{0,1}, c[p,j]∈[0, L//w_j]（パターン内容を自由変数化）, n[p]∈[0,Nb]（このパターンを使う本数）.
-  妥当性 Σ_j w_j·c[p,j] ≤ L / リンク s_used[p] ≤ n[p] ≤ Nb·s_used[p] / 本数 Σ_p n[p] == Nb /
-  需要 z[p,j]=n[p]·c[p,j], Σ_p z[p,j] ≥ d_j / 対称性破り s_used[p] ≥ s_used[p+1] / min Σ s_used.
-同一内容スロットは目的最小化が1スロットに併合するため、Σ s_used = 真の異種パターン数.
+2段構え:
+- 主経路 = 候補プール選択MIP（`min_pattern_types`）: maximal パターンを全列挙し、各パターンの
+  使用本数 x_q（整数）と使用フラグ y_q の線形MIP（Σx==bars, Σ a·x ≥ d, min Σy）で解く。
+  非凸積を持たず tractable。maximal 全列挙が尽きれば、その最小は全パターンに対する真の最小に
+  一致するため proven=True が正当（任意の非maximalパターンは、それを含む maximal パターンへ
+  同一本数で置換でき、需要 ≥・本数不変・種類数非増のため最適性を失わない）。
+- フォールバック = config-B スロット定式化（`_solve_configb`）: maximal 列挙が cap を超える大規模向け。
+  パターン内容を自由変数化し n[p]·c[p,j] の非凸積で解く。warm-start/R縮約/anchor で頑健化済みだが、
+  中規模でも最適到達を保証できない（2026-06-18 Wikipedia検証で判明, docs/SOLVER_DESIGN.md）。
 """
 
 from __future__ import annotations
@@ -50,6 +51,40 @@ def _patterns_from_seed(L: int, seed: list[tuple[Pattern, int]]) -> list[Pattern
     return sorted(by_content.values(), key=lambda p: (-p.run_count, p.item_counts))
 
 
+_POOL_CAP = 50_000
+
+
+def _enumerate_maximal_patterns(widths: list[int], L: int, cap: int) -> list[tuple[int, ...]] | None:
+    """Σ widths[j]·count[j] ≤ L かつ maximal（最小幅すら追加で入らない）な count ベクトルを全列挙.
+
+    maximal に限定しても ≥需要 のパターン種類最小化では最適性を失わない（非maximalパターンは
+    それを含む maximal パターンへ同一本数で置換でき、需要 ≥・本数不変・種類数非増）.
+    列挙数が cap を超えたら None（列挙不能 = 大規模 → config-B フォールバックへ）.
+    """
+    n = len(widths)
+    min_w = min(widths)
+    out: list[tuple[int, ...]] = []
+    counts = [0] * n
+
+    def dfs(i: int, used: int) -> bool:               # 戻り False = cap 超過で打ち切り
+        if i == n:
+            if L - used < min_w:                      # これ以上どのピースも入らない = maximal
+                out.append(tuple(counts))
+                if len(out) > cap:
+                    return False
+            return True
+        wi = widths[i]
+        for cj in range((L - used) // wi, -1, -1):
+            counts[i] = cj
+            if not dfs(i + 1, used + cj * wi):
+                counts[i] = 0
+                return False
+        counts[i] = 0
+        return True
+
+    return out if dfs(0, 0) else None
+
+
 def min_pattern_types(
     problem: Problem,
     bars: int,
@@ -57,7 +92,82 @@ def min_pattern_types(
     seed_patterns: tuple[Pattern, ...] | None = None,
     time_limit: float | None = None,
 ) -> SetupResult:
-    """ちょうど bars 本を使う前提で、需要を満たす最小の異種パターン数を求める.
+    """ちょうど bars 本で需要を満たす最小パターン種類数 P を求める（主経路 = 候補プール選択MIP）.
+
+    maximal パターンを全列挙し、使用本数 x_q・使用フラグ y_q の線形MIP（Σx==bars, Σ a·x ≥ d,
+    min Σy）で解く。プールが尽きれば真の最小に一致＝proven 正当。列挙不能なら config-B へ退避.
+    seed_patterns はフォールバック経路へ素通しするだけ（プール経路は warm-start 不要）.
+    """
+    L = problem.stock.length
+    k = problem.stock.kerf
+
+    merged: dict[int, int] = {}
+    for it in problem.demand:
+        merged[it.length] = merged.get(it.length, 0) + it.qty
+    lengths = sorted(merged.keys(), reverse=True)
+    demands = [merged[length] for length in lengths]
+    widths = [length + k for length in lengths]
+    n_types = len(lengths)
+
+    pool = _enumerate_maximal_patterns(widths, L, _POOL_CAP)
+    if pool is None:                                  # 列挙不能な大規模 → スロット定式化へ
+        return _solve_configb(problem, bars, seed_patterns=seed_patterns, time_limit=time_limit)
+
+    model = cp_model.CpModel()
+    Q = len(pool)
+    x = [model.new_int_var(0, bars, f"x_{q}") for q in range(Q)]
+    y = [model.new_bool_var(f"y_{q}") for q in range(Q)]
+    for q in range(Q):
+        model.add(x[q] <= bars * y[q])                # y_q=0 ⟹ x_q=0（未使用パターン）
+    model.add(sum(x) == bars)                          # ちょうど bars 本
+    for j in range(n_types):
+        model.add(sum(pool[q][j] * x[q] for q in range(Q)) >= demands[j])   # 需要充足（≥）
+    model.minimize(sum(y))                             # 異種パターン数の最小化
+
+    solver = cp_model.CpSolver()
+    if time_limit is not None:
+        solver.parameters.max_time_in_seconds = float(time_limit)
+    solver.parameters.num_workers = 1                 # 単一ワーカで完全決定論（同点解の揺れも封じる）
+    solver.parameters.random_seed = 0
+    status = solver.solve(model)
+    status_name = _STATUS_NAMES.get(status, str(status))
+    proven = status == cp_model.OPTIMAL and solver.best_objective_bound == solver.objective_value
+
+    by_content: dict[tuple, Pattern] = {}
+    if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+        for q in range(Q):
+            run = round(solver.value(x[q]))
+            if run <= 0:
+                continue
+            counts = pool[q]
+            item_counts = tuple(sorted((lengths[j], counts[j]) for j in range(n_types) if counts[j] > 0))
+            cuts = tuple(sorted(
+                (lengths[j] for j in range(n_types) for _ in range(counts[j])), reverse=True
+            ))
+            by_content[item_counts] = Pattern(L, cuts, item_counts, run)
+
+    patterns = sorted(by_content.values(), key=lambda p: (-p.run_count, p.item_counts))
+
+    if not patterns:                                  # 異常時のみ config-B へ退避（点を落とさない）
+        return _solve_configb(problem, bars, seed_patterns=seed_patterns, time_limit=time_limit)
+
+    return SetupResult(
+        num_patterns=len(patterns),
+        patterns=tuple(patterns),
+        status=status_name,
+        proven=proven,
+        bars=bars,
+    )
+
+
+def _solve_configb(
+    problem: Problem,
+    bars: int,
+    *,
+    seed_patterns: tuple[Pattern, ...] | None = None,
+    time_limit: float | None = None,
+) -> SetupResult:
+    """フォールバック: スロット定式化（config-B）+ warm-start/R縮約/anchor.
 
     seed_patterns（材料軸の解パターン）を与えると warm-start する:
     - スロット上限 R を材料解の種類数 P_mat に縮約（最適 P ≤ P_mat なので証明は保たれる）.

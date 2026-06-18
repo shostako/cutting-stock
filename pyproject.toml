@@ -20,7 +20,10 @@ package = false
 
 [tool.pytest.ini_options]
 testpaths = ["solver/tests"]
-addopts = "-q"
+addopts = "-q -m 'not slow'"
+markers = [
+    "slow: 実規模ベンチマーク（既定スイートから除外。`uv run pytest -m slow` で実行）",
+]
 filterwarnings = [
     # starlette TestClient の httpx 非推奨警告（良性・third-party）
     "ignore:Using `httpx` with `starlette.testclient` is deprecated:Warning",

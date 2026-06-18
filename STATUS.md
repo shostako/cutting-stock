@@ -55,21 +55,26 @@
 
 ---
 
-## 既知の天井（→ B で対処）
+## B: 再定式化（実装済み）= 候補プール選択MIP
 
-z=73 の P は **12 で頭打ち、proven立たず**。warm-start＋R縮約しても、90秒でも300秒でも改善しない。既知最適の **10**（Wikipedia。なお in-model での10可達はソルバが重すぎて未確認）には届かない。
+config-B が中規模でも最適に届かない（z=73で12止まり/proven立たず）ため、設計(SOLVER_DESIGN:85-87)記載の**候補プール選択MIP**を主経路に実装（`setup_mip.py`）:
 
-→ **config-B（非凸整数積定式化）は、この「中小規模」でも最適品質に到達できない**。設計(SOLVER_DESIGN:87)の「中小では候補プールフォールバックは基本発動しない見込み」という前提が、Wikipedia検証で崩れた。
+- maximal パターンを全列挙（`_enumerate_maximal_patterns`）
+- 使用本数 x_q・使用フラグ y_q の線形MIP（`Σx==bars`, `Σ a·x ≥ d`, `min Σy`, `num_workers=1`で決定論）
+- maximal 限定でも最適性不変（非maximalは含むmaximalへ同一本数で置換可）＝全列挙が尽きれば真の最小に一致し proven 正当。列挙 cap(5万) 超は config-B へ退避
 
----
+### 結果（実測）
 
-## 次（B）: 段取り軸の再定式化
+| z | types | setup_proven | status |
+|---|-------|--------------|--------|
+| 73 | **10** | **True** | OPTIMAL |
+| 74 | 8 | True | OPTIMAL |
 
-設計(SOLVER_DESIGN:85-87)に既に記載のある**候補プール生成 → 種類数最小の selection-MIP** を実装し、真の最適到達・証明を狙う。「全パターンに対する真の最小」保証は失うが、実際に解けるものにする。Aの後でBに進む（ユーザー決定 2026-06-18）。
+**z=73 が既知最適10に proven 到達**（config-Bの12止まりを突破）。バイト完全再現。回帰テスト `solver/tests/test_benchmark.py`（Wikipedia既知最適突き合わせ, slow marker）追加。既定スイート57 green。
 
 ---
 
 ## デプロイ状態
 
-- A の修正は作業ブランチ `feat/setup-axis-robustness` 上。**未マージ・未デプロイ**。
-- main マージ＋HF(space) デプロイは B 完了後、ユーザー確認を取ってから。
+- A（ロバスト化）+ B（再定式化）とも作業ブランチ `feat/setup-axis-robustness` 上。**未マージ・未デプロイ**。
+- main マージ＋HF(space) デプロイはユーザー確認を取ってから（`git push origin main && git push space main`）。

@@ -41,7 +41,7 @@
   - **bug#2 廃棄量メトリクス反転（既定パレート経路で発火）を修正**: 過剰生産ピースの占有計上で z 増→廃棄減の非単調（SPEC.md:52違反）だったのを `z·L − 総需要長`（kerf・端材・過剰生産含み z に単調）に統一（`solve.py`/`pareto.py`）。回帰 `test_pareto_waste_monotonic_spec52` 追加、テスト55件 green。
   - 残り確定バグ8件（全て off-default パス＝異常入力/不正オプション、既定GUIでは未発火）＋本質的限界＋カバレッジギャップは `docs/SOLVER_DESIGN.md`「M7最終レビュー結果」節に文書化。**ユーザー判断 2026-06-17: #2のみ修正、残りは文書化のみ。**
 - 2026-06-18: **Wikipedia古典例で段取り軸の欠陥を検出 → ロバスト化A実装**（ブランチ `feat/setup-axis-robustness`）。材料軸は既知最適と完全一致（73本/0.401%/proven）で健全。段取り軸 config-B は出荷コードが `R=bars`（設計の R=types からドリフト）で重すぎ、CP-SATが解を返せず status=UNKNOWN→点が黙って消える**非再現・空出力**バグ（過去の「13を誤証明」報告はハルシネーションと判明）。修正3点: warm-start（材料解をヒント注入）/ R縮約（=P_mat, 最適≤P_matで証明保持・設計復帰）/ フォールバックanchor（点を落とさない）。結果: 完全再現・空にならない・z=73のP 13→12改善・前線が本物（12/8）・テスト55 green維持。**残る天井**: z=73のPは12止まり/proven立たず（90/300秒で不変）、既知最適10に未達＝config-Bは中小規模でも最適品質に届かない。詳細 `docs/SOLVER_DESIGN.md`「段取り軸の計算量天井とロバスト化」節 + `STATUS.md`。
-- **次の一手 = B（再定式化, ユーザー決定 2026-06-18「Aの後でBに進む」）**: 設計(SOLVER_DESIGN 段取り軸 85-87行)記載の**候補プール生成→種類数最小 selection-MIP** を実装。真の最適到達・証明を狙う（全パターン真の最小保証は手放す）。A はまだ未マージ・未デプロイ、main/HF反映はB完了後にユーザー確認を取ってから。
+- 2026-06-18: **B（再定式化）完了 = 候補プール選択MIPを主経路化**（`setup_mip.py`）。maximal パターン全列挙(`_enumerate_maximal_patterns`)→使用本数x_q・使用フラグy_qの線形MIP（Σx==bars, Σa·x≥d, min Σy, num_workers=1で決定論）。非凸積が消えtractable、maximal限定でも最適性不変（非maximalは含むmaximalへ同一本数で置換可）ゆえ全列挙が尽きれば真の最小に一致＝proven正当（cap5万超はconfig-B退避）。**z=73でP=10をproven到達**（config-Bの12止まり突破, Wikipedia既知最小10に一致）、z=74でP=8 proven、バイト完全再現。回帰 `solver/tests/test_benchmark.py`（maximal列挙単体＋Wikipedia既知最適突き合わせ, slow marker隔離）追加、既定スイート57 green。A+Bとも作業ブランチ `feat/setup-axis-robustness` 上、**未マージ・未デプロイ**（main/HF反映はユーザー確認後 `git push origin main && git push space main`）。
 - 次の選択肢: スレッドC M6 複数原材料長（据え置き決定）/ 現状で一区切り。
 
 ## 確定事項
