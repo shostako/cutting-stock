@@ -7,6 +7,28 @@ export interface InputState {
   maxExtra: number
 }
 
+// Wikipedia "Cutting stock problem" 製紙ロール代表例（既知最適 73本 / 0.401% / 切り方10種）
+const WIKIPEDIA_EXAMPLE: InputState = {
+  length: 5600,
+  kerf: 0,
+  demand: [
+    { length: 1380, qty: 22, label: 'A' },
+    { length: 1520, qty: 25, label: 'B' },
+    { length: 1560, qty: 12, label: 'C' },
+    { length: 1710, qty: 14, label: 'D' },
+    { length: 1820, qty: 18, label: 'E' },
+    { length: 1880, qty: 18, label: 'F' },
+    { length: 1930, qty: 20, label: 'G' },
+    { length: 2000, qty: 10, label: 'H' },
+    { length: 2050, qty: 12, label: 'I' },
+    { length: 2100, qty: 14, label: 'J' },
+    { length: 2140, qty: 16, label: 'K' },
+    { length: 2150, qty: 18, label: 'L' },
+    { length: 2200, qty: 20, label: 'M' },
+  ],
+  maxExtra: 1,
+}
+
 export function InputPanel({
   state,
   onChange,
@@ -31,6 +53,11 @@ export function InputPanel({
 
   return (
     <div className="input-panel">
+      <div className="example-load">
+        <button className="example-btn" onClick={() => onChange(WIKIPEDIA_EXAMPLE)}>
+          Wikipedia板取り例題を読み込む
+        </button>
+      </div>
       <section>
         <h2>原材料（初期設定）</h2>
         <label className="field">
