@@ -36,8 +36,34 @@ class SetupResult:
     bars: int                          # Nb（本数バジェット）
 
 
-def min_pattern_types(problem: Problem, bars: int, *, time_limit: float | None = None) -> SetupResult:
-    """ちょうど bars 本を使う前提で、需要を満たす最小の異種パターン数を求める."""
+def _patterns_from_seed(L: int, seed: list[tuple[Pattern, int]]) -> list[Pattern]:
+    """warm-start 種（パターン, 本数）を、同一内容を併合した Pattern 群に正規化する."""
+    by_content: dict[tuple, Pattern] = {}
+    for pat, run in seed:
+        if run <= 0:
+            continue
+        if pat.item_counts in by_content:
+            prev = by_content[pat.item_counts]
+            by_content[pat.item_counts] = Pattern(L, prev.cuts, prev.item_counts, prev.run_count + run)
+        else:
+            by_content[pat.item_counts] = Pattern(L, pat.cuts, pat.item_counts, run)
+    return sorted(by_content.values(), key=lambda p: (-p.run_count, p.item_counts))
+
+
+def min_pattern_types(
+    problem: Problem,
+    bars: int,
+    *,
+    seed_patterns: tuple[Pattern, ...] | None = None,
+    time_limit: float | None = None,
+) -> SetupResult:
+    """ちょうど bars 本を使う前提で、需要を満たす最小の異種パターン数を求める.
+
+    seed_patterns（材料軸の解パターン）を与えると warm-start する:
+    - スロット上限 R を材料解の種類数 P_mat に縮約（最適 P ≤ P_mat なので証明は保たれる）.
+    - 材料解を初期可行点として CP-SAT にヒント注入（UNKNOWN/空出力を封じる）.
+    - ソルバが解を返せなくても材料解を anchor として採用し、点を絶対に落とさない.
+    """
     L = problem.stock.length
     k = problem.stock.kerf
 
@@ -50,7 +76,17 @@ def min_pattern_types(problem: Problem, bars: int, *, time_limit: float | None =
     n_types = len(lengths)
     caps = [L // widths[j] for j in range(n_types)]   # 1本に入る各typeの最大本数
 
-    R = bars                                          # スロット上限（P ≤ bars）
+    # warm-start 種: 材料解パターンを「ちょうど bars 本」へ調整（余り本数は先頭パターンに吸収＝過剰生産→廃棄）.
+    seed: list[tuple[Pattern, int]] = []
+    if seed_patterns:
+        runs = [p.run_count for p in seed_patterns]
+        extra = bars - sum(runs)
+        if extra >= 0 and runs:
+            adj = list(runs)
+            adj[0] += extra
+            seed = [(pat, run) for pat, run in zip(seed_patterns, adj) if run > 0]
+
+    R = len(seed) if seed else bars                   # スロット上限（P ≤ 既知可行解の種類数, なければ bars）
     model = cp_model.CpModel()
     s_used = [model.new_bool_var(f"s_{p}") for p in range(R)]
     c = [[model.new_int_var(0, caps[j], f"c_{p}_{j}") for j in range(n_types)] for p in range(R)]
@@ -73,6 +109,14 @@ def min_pattern_types(problem: Problem, bars: int, *, time_limit: float | None =
     for p in range(R - 1):
         model.add(s_used[p] >= s_used[p + 1])         # 対称性破り
     model.minimize(sum(s_used))
+
+    if seed:                                          # 材料解を初期可行点としてヒント注入
+        for p, (pat, run) in enumerate(seed):
+            counts = dict(pat.item_counts)
+            model.add_hint(s_used[p], 1)
+            model.add_hint(n[p], run)
+            for j, length in enumerate(lengths):
+                model.add_hint(c[p][j], counts.get(length, 0))
 
     solver = cp_model.CpSolver()
     if time_limit is not None:
@@ -104,6 +148,13 @@ def min_pattern_types(problem: Problem, bars: int, *, time_limit: float | None =
                 by_content[item_counts] = Pattern(L, cuts, item_counts, run)
 
     patterns = sorted(by_content.values(), key=lambda p: (-p.run_count, p.item_counts))
+
+    # フォールバック: ソルバが何も返さない / 種より悪い場合は材料解 anchor を採用（点を絶対に落とさない）.
+    if seed and (not patterns or len(patterns) > len(seed)):
+        patterns = _patterns_from_seed(L, seed)
+        status_name = "FEASIBLE"
+        proven = False
+
     return SetupResult(
         num_patterns=len(patterns),
         patterns=tuple(patterns),

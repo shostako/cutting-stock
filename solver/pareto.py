@@ -44,7 +44,7 @@ def solve_pareto(problem: Problem, *, max_extra_bars: int = 3, time_limit: float
 
     raw: list[Solution] = []
     for z in range(z_star, z_star + max_extra_bars + 1):
-        setup = min_pattern_types(problem, bars=z, time_limit=time_limit)
+        setup = min_pattern_types(problem, bars=z, seed_patterns=base.patterns, time_limit=time_limit)
         if setup.status not in ("OPTIMAL", "FEASIBLE"):
             continue
         raw.append(_build_solution(problem, z, z_star, base, setup))
