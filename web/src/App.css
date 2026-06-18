@@ -133,6 +133,23 @@
 .example-btn { width: 100%; font-size: 13px; padding: 7px 12px; border: 1px dashed var(--accent); border-radius: 6px; background: var(--accent-soft); color: var(--accent); cursor: pointer; font-weight: 600; }
 .example-btn:hover { background: var(--accent); color: #fff; }
 
+/* ── 高度モード チェックボックス + ステッパー ── */
+.advanced-check { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--ink); cursor: pointer; user-select: none; line-height: 1.4; }
+.advanced-check input { accent-color: var(--accent); margin-top: 2px; flex-shrink: 0; }
+.advanced-body { margin: 8px 0 4px; padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 6px 6px 0; }
+.advanced-body .note { margin: 0 0 8px; }
+
+/* ── 2択トグル（散布図の置換） ── */
+.tradeoff { margin-bottom: 16px; }
+.tradeoff-seg { display: flex; gap: 8px; }
+.seg-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 8px; border: 1.5px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink-soft); cursor: pointer; font-size: 14px; font-weight: 600; }
+.seg-btn:hover { border-color: var(--accent); }
+.seg-btn.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.seg-sub { font-size: 11px; font-weight: 500; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.seg-btn.active .seg-sub { color: var(--accent); }
+.tradeoff-diff { margin: 8px 0 0; font-size: 12px; color: var(--ink-soft); line-height: 1.5; }
+.tradeoff-degenerate { margin: 0 0 14px; padding: 8px 12px; font-size: 13px; color: var(--ink-soft); background: var(--line-soft); border-radius: 6px; }
+
 .overproduction { margin-top: 14px; }
 .over-none { font-size: 12px; color: var(--ink-soft); margin: 6px 0 0; }
 .over-title { font-size: 13px; color: var(--warn); margin: 0 0 6px; }
@@ -150,7 +167,7 @@
 
 /* ── 印刷: カット指示書だけを綺麗に出す ── */
 @media print {
-  .app-header, .left, .right-toolbar, .stale-banner { display: none !important; }
+  .app-header, .left, .right-toolbar, .stale-banner, .tradeoff { display: none !important; }
   .layout { display: block; }
   .right { width: 100%; }
   .print-only { display: block !important; }

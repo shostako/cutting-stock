@@ -5,10 +5,9 @@ import { health, solve, validate } from './api/client'
 import { makeColorOf } from './colors'
 import { SAMPLE } from './fixtures'
 import { InputPanel, type InputState } from './components/InputPanel'
-import { ParetoChart } from './components/ParetoChart'
 import { MetricsCard } from './components/MetricsCard'
 import { PatternView } from './components/PatternView'
-import { ComparePanel } from './components/ComparePanel'
+import { TradeoffToggle } from './components/TradeoffToggle'
 import { computeProduction, buildPlanCsv, downloadCsv } from './report'
 import { fmt } from './format'
 
@@ -27,7 +26,8 @@ const INITIAL: InputState = {
     { length: 290, qty: 5, label: 'C' },
     { length: 210, qty: 7, label: 'D' },
   ],
-  maxExtra: 3,
+  maxExtra: 1,
+  advanced: false,   // 既定は余分0本・解1つ（現場の一本道）
 }
 
 function App() {
@@ -41,7 +41,6 @@ function App() {
   const [error, setError] = useState<string | null>(null)
   const [feasibility, setFeasibility] = useState<string | null>(null)
   const [healthy, setHealthy] = useState<boolean | null>(null)
-  const [compareMode, setCompareMode] = useState(false)
   const [dirty, setDirty] = useState(false) // 入力が最新の結果と乖離（再計算が要る）
   const abortRef = useRef<AbortController | null>(null)
 
@@ -72,8 +71,10 @@ function App() {
     setLoading(true)
     setError(null)
     setFeasibility(null)
+    // 高度モードOFFなら余分0本（=解1つ）。ON時のみ maxExtra を効かせる。
+    const eff: InputState = { ...input, maxExtra: input.advanced ? input.maxExtra : 0 }
     try {
-      const res = await solve(input, ac.signal)
+      const res = await solve(eff, ac.signal)
       if (res.status === 'ERROR') {
         setError(`${ERROR_LABEL[res.error.code] ?? res.error.code}: ${res.error.message}`)
       } else {
@@ -82,8 +83,8 @@ function App() {
         setSelected(res.pareto.recommended_index)
         setDirty(false)
         try {
-          const v = await validate(input)
-          setFeasibility(v.feasible ? `実行可能（下界 ${v.lower_bound_bins} 本）` : null)
+          const v = await validate(eff)
+          setFeasibility(v.feasible ? `実行可能（最低 ${v.lower_bound_bins} 本必要）` : null)
         } catch { /* validate は補助、失敗は無視 */ }
       }
     } catch (e) {
@@ -132,13 +133,7 @@ function App() {
             error={error}
             feasibility={feasibility}
           />
-          <ParetoChart
-            frontier={result.pareto}
-            lowerBound={result.lower_bound_bins}
-            selected={selected}
-            onSelect={setSelected}
-          />
-          <MetricsCard solution={sol} lowerBound={result.lower_bound_bins} />
+          <MetricsCard solution={sol} lowerBound={result.lower_bound_bins} advanced={solvedInput.advanced} />
         </aside>
 
         <main className="right">
@@ -150,26 +145,14 @@ function App() {
               <li>カット代: {result.input_echo.kerf} mm</li>
               <li>必要原材料: {sol.bars_used} 本</li>
               <li>総廃棄: {fmt(sol.total_waste)} mm（{(sol.waste_ratio * 100).toFixed(2)}%）</li>
-              <li>切り方の種類: {sol.num_pattern_types}</li>
+              <li>切り方の数: {sol.num_pattern_types} 通り</li>
             </ul>
           </div>
           <div className="right-toolbar">
             <h2>カットパターン</h2>
-            <div className="right-toolbar-actions">
-              <div className="report-actions">
-                <button className="report-btn" onClick={handlePrint}>印刷</button>
-                <button className="report-btn" onClick={handleCsv}>CSVで書き出し</button>
-              </div>
-              {result.pareto.solutions.length > 1 && (
-                <label className="compare-toggle">
-                  <input
-                    type="checkbox"
-                    checked={compareMode}
-                    onChange={(e) => setCompareMode(e.target.checked)}
-                  />
-                  比較モード（材料最優先 ⇄ 段取り最少）
-                </label>
-              )}
+            <div className="report-actions">
+              <button className="report-btn" onClick={handlePrint}>印刷</button>
+              <button className="report-btn" onClick={handleCsv}>CSVで書き出し</button>
             </div>
           </div>
           {dirty && (
@@ -178,11 +161,15 @@ function App() {
             </div>
           )}
           <div className={dirty ? 'stale-content' : undefined}>
-            {compareMode && result.pareto.solutions.length > 1 ? (
-              <ComparePanel frontier={result.pareto} colorOf={colorOf} labelOf={labelOf} />
-            ) : (
-              <PatternView solution={sol} colorOf={colorOf} labelOf={labelOf} />
+            {solvedInput.advanced && result.pareto.solutions.length > 1 && (
+              <TradeoffToggle frontier={result.pareto} selected={selected} onSelect={setSelected} />
             )}
+            {solvedInput.advanced && result.pareto.solutions.length === 1 && (
+              <p className="tradeoff-degenerate">
+                この条件では、本数を増やしても切り方は減りませんでした（最も無駄の少ない計画を表示）。
+              </p>
+            )}
+            <PatternView solution={sol} colorOf={colorOf} labelOf={labelOf} advanced={solvedInput.advanced} />
           </div>
           <div className="overproduction">
             {hasOver ? (

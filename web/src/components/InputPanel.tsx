@@ -5,6 +5,7 @@ export interface InputState {
   kerf: number
   demand: DemandRow[]
   maxExtra: number
+  advanced: boolean   // 「切り方を減らすため余分に使う」高度モード（既定OFF）
 }
 
 // Wikipedia "Cutting stock problem" 製紙ロール代表例（既知最適 73本 / 0.401% / 切り方10種）
@@ -27,6 +28,7 @@ const WIKIPEDIA_EXAMPLE: InputState = {
     { length: 2200, qty: 20, label: 'M' },
   ],
   maxExtra: 1,
+  advanced: true,   // 例題はトレードオフ（切り方10⇄8）を見せたいので高度モードON
 }
 
 export function InputPanel({
@@ -96,13 +98,31 @@ export function InputPanel({
       </section>
 
       <section>
-        <label className="field">
-          余分に使ってよい本数
-          <input type="number" value={state.maxExtra} min={0} max={10}
-            onChange={(e) => onChange({ ...state, maxExtra: Number(e.target.value) })} />
-          <span className="unit">本</span>
+        <label className="advanced-check">
+          <input
+            type="checkbox"
+            checked={state.advanced}
+            onChange={(e) =>
+              onChange({
+                ...state,
+                advanced: e.target.checked,
+                maxExtra: e.target.checked ? Math.max(1, state.maxExtra) : state.maxExtra,
+              })
+            }
+          />
+          切り方の数をもっと減らしたい（原材料を少し多めに使ってよい）
         </label>
-        <p className="note">※ 切り方の種類を減らすため、材料最少より何本まで余分に使ってよいか</p>
+        {state.advanced && (
+          <div className="advanced-body">
+            <p className="note">原材料を少し多めに使うほど、切り替え（段取り）の手間を減らせる場合があります。</p>
+            <label className="field">
+              原材料を最大
+              <input type="number" value={state.maxExtra} min={1} max={10}
+                onChange={(e) => onChange({ ...state, maxExtra: Number(e.target.value) })} />
+              <span className="unit">本まで多めに</span>
+            </label>
+          </div>
+        )}
         <button className="solve-btn" onClick={onSolve} disabled={loading}>
           {loading ? '計算中…' : '最適化を実行 ▶'}
         </button>

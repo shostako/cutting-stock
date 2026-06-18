@@ -41,12 +41,14 @@ export function PatternView({
   labelOf,
   title,
   showLegend = true,
+  advanced = false,
 }: {
   solution: Solution
   colorOf: (l: number) => string
   labelOf: (l: number) => string
   title?: string
   showLegend?: boolean
+  advanced?: boolean   // 最適性バッジは高度モード時のみ表示
 }) {
   const lengths = Array.from(new Set(solution.patterns.flatMap((p) => p.cuts))).sort((a, b) => b - a)
 
@@ -57,9 +59,9 @@ export function PatternView({
         <div className="head-metrics">
           <span>使用 {solution.bars_used}本</span>
           <span>廃棄率 {(solution.waste_ratio * 100).toFixed(2)}%</span>
-          <span>種類 {solution.num_pattern_types}</span>
-          <OptimalityBadge o={solution.optimality} />
-          <SetupBadge o={solution.optimality} />
+          <span>切り方 {solution.num_pattern_types}通り</span>
+          {advanced && <OptimalityBadge o={solution.optimality} />}
+          {advanced && <SetupBadge o={solution.optimality} />}
         </div>
       </div>
 
