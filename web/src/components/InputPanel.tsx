@@ -70,11 +70,12 @@ export function InputPanel({
 
       <section>
         <label className="field">
-          探索幅 max_extra
+          余分に使ってよい本数
           <input type="number" value={state.maxExtra} min={0} max={10}
             onChange={(e) => onChange({ ...state, maxExtra: Number(e.target.value) })} />
           <span className="unit">本</span>
         </label>
+        <p className="note">※ 切り方の種類を減らすため、材料最少より何本まで余分に使ってよいか</p>
         <button className="solve-btn" onClick={onSolve} disabled={loading}>
           {loading ? '計算中…' : '最適化を実行 ▶'}
         </button>

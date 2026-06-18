@@ -9,6 +9,8 @@ import { ParetoChart } from './components/ParetoChart'
 import { MetricsCard } from './components/MetricsCard'
 import { PatternView } from './components/PatternView'
 import { ComparePanel } from './components/ComparePanel'
+import { computeProduction, buildPlanCsv, downloadCsv } from './report'
+import { fmt } from './format'
 
 const ERROR_LABEL: Record<string, string> = {
   INFEASIBLE: '解なし',
@@ -32,6 +34,8 @@ function App() {
   const [input, setInput] = useState<InputState>(INITIAL)
   // 初期表示は実ソルバ出力フィクスチャ（バックエンド未起動でも全UIが見える）
   const [result, setResult] = useState<SolveOk>(SAMPLE)
+  // 解いた時点の入力（過剰生産・ラベルは結果と整合させるためこちらを基準にする）
+  const [solvedInput, setSolvedInput] = useState<InputState>(INITIAL)
   const [selected, setSelected] = useState<number>(SAMPLE.pareto.recommended_index)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -52,9 +56,9 @@ function App() {
 
   const labelOf = useMemo(() => {
     const m = new Map<number, string>()
-    for (const d of input.demand) m.set(d.length, d.label)
+    for (const d of solvedInput.demand) m.set(d.length, d.label)
     return (l: number) => m.get(l) ?? ''
-  }, [input.demand])
+  }, [solvedInput.demand])
 
   const colorOf = useMemo(() => {
     const lengths = result.pareto.solutions.flatMap((s) => s.patterns.flatMap((p) => p.cuts))
@@ -74,6 +78,7 @@ function App() {
         setError(`${ERROR_LABEL[res.error.code] ?? res.error.code}: ${res.error.message}`)
       } else {
         setResult(res)
+        setSolvedInput(input)
         setSelected(res.pareto.recommended_index)
         setDirty(false)
         try {
@@ -89,6 +94,21 @@ function App() {
   }
 
   const sol = result.pareto.solutions[selected] ?? result.pareto.solutions[0]
+  const production = useMemo(() => computeProduction(solvedInput.demand, sol), [solvedInput.demand, sol])
+  const hasOver = production.some((r) => r.over > 0)
+  const dateStr = new Date().toLocaleDateString('ja-JP')
+
+  const handlePrint = () => window.print()
+  const handleCsv = () =>
+    downloadCsv(
+      'cut-plan.csv',
+      buildPlanCsv({
+        length: result.input_echo.length,
+        kerf: result.input_echo.kerf,
+        solution: sol,
+        production,
+      }),
+    )
 
   return (
     <div className="app">
@@ -122,18 +142,35 @@ function App() {
         </aside>
 
         <main className="right">
+          <div className="print-only print-head">
+            <h2>カット指示書</h2>
+            <p className="print-date">{dateStr}</p>
+            <ul className="print-summary">
+              <li>原材料長: {result.input_echo.length} mm</li>
+              <li>カット代: {result.input_echo.kerf} mm</li>
+              <li>必要原材料: {sol.bars_used} 本</li>
+              <li>総廃棄: {fmt(sol.total_waste)} mm（{(sol.waste_ratio * 100).toFixed(2)}%）</li>
+              <li>切り方の種類: {sol.num_pattern_types}</li>
+            </ul>
+          </div>
           <div className="right-toolbar">
             <h2>カットパターン</h2>
-            {result.pareto.solutions.length > 1 && (
-              <label className="compare-toggle">
-                <input
-                  type="checkbox"
-                  checked={compareMode}
-                  onChange={(e) => setCompareMode(e.target.checked)}
-                />
-                比較モード（材料最優先 ⇄ 段取り最少）
-              </label>
-            )}
+            <div className="right-toolbar-actions">
+              <div className="report-actions">
+                <button className="report-btn" onClick={handlePrint}>印刷</button>
+                <button className="report-btn" onClick={handleCsv}>CSVで書き出し</button>
+              </div>
+              {result.pareto.solutions.length > 1 && (
+                <label className="compare-toggle">
+                  <input
+                    type="checkbox"
+                    checked={compareMode}
+                    onChange={(e) => setCompareMode(e.target.checked)}
+                  />
+                  比較モード（材料最優先 ⇄ 段取り最少）
+                </label>
+              )}
+            </div>
           </div>
           {dirty && (
             <div className="stale-banner">
@@ -145,6 +182,31 @@ function App() {
               <ComparePanel frontier={result.pareto} colorOf={colorOf} labelOf={labelOf} />
             ) : (
               <PatternView solution={sol} colorOf={colorOf} labelOf={labelOf} />
+            )}
+          </div>
+          <div className="overproduction">
+            {hasOver ? (
+              <>
+                <h3 className="over-title">過剰生産（廃棄に計上されます）</h3>
+                <table className="over-table">
+                  <thead>
+                    <tr><th>品目</th><th>長さ</th><th>需要</th><th>生産</th><th>過剰</th></tr>
+                  </thead>
+                  <tbody>
+                    {production.filter((r) => r.over > 0).map((r) => (
+                      <tr key={r.length}>
+                        <td>{r.label || r.length}</td>
+                        <td>{r.length} mm</td>
+                        <td>{r.demand}</td>
+                        <td>{r.produced}</td>
+                        <td className="over-cell">+{r.over}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            ) : (
+              <p className="over-none">過剰生産なし（需要ぴったり）</p>
             )}
           </div>
         </main>

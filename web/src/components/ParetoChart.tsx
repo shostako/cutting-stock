@@ -46,7 +46,7 @@ export function ParetoChart({
         {/* 下界線 */}
         <line x1={PAD.l} y1={py(lowerBound)} x2={W - PAD.r} y2={py(lowerBound)} className="lb-line" />
         <text x={W - PAD.r} y={py(lowerBound) - 4} textAnchor="end" className="lb-label">
-          下界 z≥{lowerBound}
+          下限 {lowerBound}本
         </text>
         {/* 点 */}
         {sols.map((s, i) => {
@@ -62,13 +62,13 @@ export function ParetoChart({
               {isSetup && <rect x={x - 5} y={y - 5} width={10} height={10} transform={`rotate(45 ${x} ${y})`} className="pt-setup" />}
               {!isMat && !isSetup && <circle cx={x} cy={y} r={4} className="pt-other" />}
               <circle cx={x} cy={y} r={3} className={isSel ? 'pt-dot-sel' : 'pt-dot'} />
-              <title>{`本数 z=${s.bars_used} / 種類 P=${s.num_pattern_types} / 廃棄 ${(s.waste_ratio * 100).toFixed(2)}%`}</title>
+              <title>{`原材料 ${s.bars_used}本 / 切り方 ${s.num_pattern_types}種 / 廃棄 ${(s.waste_ratio * 100).toFixed(2)}%`}</title>
             </g>
           )
         })}
         {/* 軸ラベル */}
-        <text x={(W + PAD.l) / 2} y={H - 6} textAnchor="middle" className="ax-label">パターン種類数 P</text>
-        <text x={12} y={(H - PAD.b + PAD.t) / 2} textAnchor="middle" className="ax-label" transform={`rotate(-90 12 ${(H - PAD.b + PAD.t) / 2})`}>使用本数 z</text>
+        <text x={(W + PAD.l) / 2} y={H - 6} textAnchor="middle" className="ax-label">切り方の種類</text>
+        <text x={12} y={(H - PAD.b + PAD.t) / 2} textAnchor="middle" className="ax-label" transform={`rotate(-90 12 ${(H - PAD.b + PAD.t) / 2})`}>使用本数</text>
       </svg>
 
       <div className="slider-row">
