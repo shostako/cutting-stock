@@ -24,7 +24,6 @@ export interface Optimality {
   mip_gap: number
   lp_lower_bound: number | null
   proven_optimal: boolean
-  setup_proven: boolean
   timed_out: boolean
 }
 
@@ -37,9 +36,10 @@ export interface Solution {
   patterns: Pattern[]
 }
 
+// 材料最適専用版では solutions は常に長さ1（段取り軸は pattern-stock へ分離）。
+// フィールド名は API 契約安定化のため残置（material_optimal_idx == recommended_index == 0）。
 export interface ParetoFrontier {
   material_optimal_idx: number
-  setup_optimal_idx: number
   recommended_index: number
   solutions: Solution[]
 }

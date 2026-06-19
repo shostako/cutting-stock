@@ -7,7 +7,6 @@ import { SAMPLE } from './fixtures'
 import { InputPanel, type InputState } from './components/InputPanel'
 import { MetricsCard } from './components/MetricsCard'
 import { PatternView } from './components/PatternView'
-import { TradeoffToggle } from './components/TradeoffToggle'
 import { computeProduction, buildPlanCsv, downloadCsv } from './report'
 import { fmt } from './format'
 
@@ -26,8 +25,6 @@ const INITIAL: InputState = {
     { length: 290, qty: 5, label: 'C' },
     { length: 210, qty: 7, label: 'D' },
   ],
-  maxExtra: 1,
-  advanced: false,   // 既定は余分0本・解1つ（現場の一本道）
 }
 
 function App() {
@@ -36,7 +33,6 @@ function App() {
   const [result, setResult] = useState<SolveOk>(SAMPLE)
   // 解いた時点の入力（過剰生産・ラベルは結果と整合させるためこちらを基準にする）
   const [solvedInput, setSolvedInput] = useState<InputState>(INITIAL)
-  const [selected, setSelected] = useState<number>(SAMPLE.pareto.recommended_index)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [feasibility, setFeasibility] = useState<string | null>(null)
@@ -71,19 +67,16 @@ function App() {
     setLoading(true)
     setError(null)
     setFeasibility(null)
-    // 高度モードOFFなら余分0本（=解1つ）。ON時のみ maxExtra を効かせる。
-    const eff: InputState = { ...input, maxExtra: input.advanced ? input.maxExtra : 0 }
     try {
-      const res = await solve(eff, ac.signal)
+      const res = await solve(input, ac.signal)
       if (res.status === 'ERROR') {
         setError(`${ERROR_LABEL[res.error.code] ?? res.error.code}: ${res.error.message}`)
       } else {
         setResult(res)
         setSolvedInput(input)
-        setSelected(res.pareto.recommended_index)
         setDirty(false)
         try {
-          const v = await validate(eff)
+          const v = await validate(input)
           setFeasibility(v.feasible ? `実行可能（最低 ${v.lower_bound_bins} 本必要）` : null)
         } catch { /* validate は補助、失敗は無視 */ }
       }
@@ -94,7 +87,7 @@ function App() {
     }
   }
 
-  const sol = result.pareto.solutions[selected] ?? result.pareto.solutions[0]
+  const sol = result.pareto.solutions[0]
   const production = useMemo(() => computeProduction(solvedInput.demand, sol), [solvedInput.demand, sol])
   const hasOver = production.some((r) => r.over > 0)
   const dateStr = new Date().toLocaleDateString('ja-JP')
@@ -119,7 +112,7 @@ function App() {
           <span className={`health ${healthy ? 'ok' : healthy === false ? 'ng' : ''}`}>
             {healthy ? '● API接続' : healthy === false ? '○ API未接続(fixture表示)' : '…'}
           </span>
-          <span className="meta">{result.meta?.material_solver} / {result.meta?.setup_solver}</span>
+          <span className="meta">{result.meta?.material_solver}</span>
         </div>
       </header>
 
@@ -133,7 +126,7 @@ function App() {
             error={error}
             feasibility={feasibility}
           />
-          <MetricsCard solution={sol} lowerBound={result.lower_bound_bins} advanced={solvedInput.advanced} />
+          <MetricsCard solution={sol} lowerBound={result.lower_bound_bins} />
         </aside>
 
         <main className="right">
@@ -161,15 +154,7 @@ function App() {
             </div>
           )}
           <div className={dirty ? 'stale-content' : undefined}>
-            {solvedInput.advanced && result.pareto.solutions.length > 1 && (
-              <TradeoffToggle frontier={result.pareto} selected={selected} onSelect={setSelected} />
-            )}
-            {solvedInput.advanced && result.pareto.solutions.length === 1 && (
-              <p className="tradeoff-degenerate">
-                この条件では、本数を増やしても切り方は減りませんでした（最も無駄の少ない計画を表示）。
-              </p>
-            )}
-            <PatternView solution={sol} colorOf={colorOf} labelOf={labelOf} advanced={solvedInput.advanced} />
+            <PatternView solution={sol} colorOf={colorOf} labelOf={labelOf} />
           </div>
           <div className="overproduction">
             {hasOver ? (

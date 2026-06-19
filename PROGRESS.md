@@ -1,5 +1,10 @@
 # PROGRESS — cutting-stock
 
+> **2026-06-20 段取り軸の分離**: 段取り最少（パターン種類最小化）軸を本リポから削除し、材料最適専用ツールにした。
+> 段取り軸は本数を外部入力に取る別目的のため、両軸を保持した姉妹プロジェクト `~/ClaudeCode/pattern-stock` へ切り出した。
+> 削除対象: `solver/setup_mip.py` `solver/pareto.py` `web/.../TradeoffToggle.tsx` + API/GUI/テストの段取り参照。
+> 材料軸（arc-flow MIP on HiGHS, gap=0 証明）と `oracle.py`（独立CP-SAT検証）は無傷。以下の履歴は分離前の経緯を含む。
+
 ## 現在の状態
 
 - 2026-06-15: labセッションで設計・スキャフォールド。独立gitリポ作成済み。

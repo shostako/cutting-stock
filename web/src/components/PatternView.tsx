@@ -1,7 +1,7 @@
 import type { Solution } from '../api/types'
 import { KERF_COLOR, WASTE_COLOR } from '../colors'
 import { fmt } from '../format'
-import { OptimalityBadge, SetupBadge } from './OptimalityBadge'
+import { OptimalityBadge } from './OptimalityBadge'
 import { PatternBar } from './PatternBar'
 
 // 色凡例（piece 長さ別 + kerf + waste）。単体表示でも比較モードの共有凡例でも使う。
@@ -41,14 +41,12 @@ export function PatternView({
   labelOf,
   title,
   showLegend = true,
-  advanced = false,
 }: {
   solution: Solution
   colorOf: (l: number) => string
   labelOf: (l: number) => string
   title?: string
   showLegend?: boolean
-  advanced?: boolean   // 最適性バッジは高度モード時のみ表示
 }) {
   const lengths = Array.from(new Set(solution.patterns.flatMap((p) => p.cuts))).sort((a, b) => b - a)
 
@@ -60,8 +58,7 @@ export function PatternView({
           <span>使用 {solution.bars_used}本</span>
           <span>廃棄率 {(solution.waste_ratio * 100).toFixed(2)}%</span>
           <span>切り方 {solution.num_pattern_types}通り</span>
-          {advanced && <OptimalityBadge o={solution.optimality} />}
-          {advanced && <SetupBadge o={solution.optimality} />}
+          <OptimalityBadge o={solution.optimality} />
         </div>
       </div>
 

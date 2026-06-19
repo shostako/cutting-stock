@@ -13,7 +13,7 @@ from solver.errors import InvalidInput, SolverError
 from solver.models import DemandItem, Pattern, Problem, Solution, StockSpec
 from solver.solve import solve
 
-_META = {"material_solver": "arcflow+HiGHS", "setup_solver": "CP-SAT(configB)"}
+_META = {"material_solver": "arcflow+HiGHS"}
 
 
 def parse_problem(payload: dict[str, Any]) -> tuple[Problem, dict[str, Any]]:
@@ -88,7 +88,6 @@ def _serialize_solution(sol: Solution, kerf: int, labels: dict[int, str]) -> dic
             "mip_gap": o.mip_gap,
             "lp_lower_bound": o.lp_lower_bound,
             "proven_optimal": o.proven_optimal,
-            "setup_proven": o.setup_proven,
             "timed_out": o.timed_out,
         },
         "patterns": [_serialize_pattern(p, kerf, labels) for p in sol.patterns],
@@ -109,7 +108,6 @@ def _serialize_frontier(problem: Problem, front) -> dict[str, Any]:
         "lower_bound_bins": continuous_lower_bound(problem),
         "pareto": {
             "material_optimal_idx": front.material_optimal_idx,
-            "setup_optimal_idx": front.setup_optimal_idx,
             "recommended_index": front.recommended_index,
             "solutions": [_serialize_solution(s, kerf, labels) for s in front.solutions],
         },
@@ -128,14 +126,12 @@ def solve_from_dict(payload: dict[str, Any]) -> dict[str, Any]:
     except SolverError as e:
         return _error(e.code, e.message)
 
-    mode = options.get("mode", "pareto")
-    max_extra_bars = int(options.get("max_extra_bars", 3))
     time_limit = options.get("time_limit_sec")
     if time_limit is not None:
         time_limit = float(time_limit)
 
     try:
-        front = solve(problem, mode=mode, max_extra_bars=max_extra_bars, time_limit=time_limit)
+        front = solve(problem, time_limit=time_limit)
     except SolverError as e:
         return _error(e.code, e.message)
 

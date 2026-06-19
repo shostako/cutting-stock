@@ -1,6 +1,7 @@
 """公開エントリ. Problem を受けて解を返す（唯一の外部ロジック入口, I/O 非依存）.
 
-M1 時点: 材料軸（使用本数最小）のみ. M3 で段取り軸 + パレート前線に拡張する.
+材料軸（使用本数最小 = arc-flow MIP on HiGHS, gap=0 証明）の単一解を返す.
+段取り軸（パターン種類最小化）は分離済み（→ 姉妹プロジェクト pattern-stock）.
 """
 
 from __future__ import annotations
@@ -41,7 +42,6 @@ def solve_material(problem: Problem, *, time_limit: float | None = None) -> Solu
         mip_gap=flow.mip_gap,
         lp_lower_bound=flow.lp_lower_bound,
         proven_optimal=proven,
-        setup_proven=False,
         timed_out=flow.status == "TimeLimit",
     )
 
@@ -55,26 +55,14 @@ def solve_material(problem: Problem, *, time_limit: float | None = None) -> Solu
     )
 
 
-def solve(
-    problem: Problem,
-    *,
-    mode: str = "pareto",
-    max_extra_bars: int = 3,
-    time_limit: float | None = None,
-) -> ParetoFrontier:
-    """公開エントリ.
+def solve(problem: Problem, *, time_limit: float | None = None) -> ParetoFrontier:
+    """公開エントリ. 材料最適（使用本数最小）の単一解を ParetoFrontier に包んで返す.
 
-    mode="material": 材料最適の単一点のみ. mode="pareto": 材料軸×段取り軸のパレート前線.
+    段取り軸（パターン種類最小化）は本ツールから分離済み（→ 姉妹プロジェクト pattern-stock）.
     """
-    if mode == "material":
-        sol = solve_material(problem, time_limit=time_limit)
-        return ParetoFrontier(
-            solutions=(sol,),
-            material_optimal_idx=0,
-            setup_optimal_idx=0,
-            recommended_index=0,
-        )
-    # 遅延 import で solve <-> pareto の循環を回避
-    from solver.pareto import solve_pareto
-
-    return solve_pareto(problem, max_extra_bars=max_extra_bars, time_limit=time_limit)
+    sol = solve_material(problem, time_limit=time_limit)
+    return ParetoFrontier(
+        solutions=(sol,),
+        material_optimal_idx=0,
+        recommended_index=0,
+    )

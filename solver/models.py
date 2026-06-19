@@ -91,15 +91,13 @@ class Pattern:
 class Optimality:
     """最適性の根拠（全解に必ず添付）. SPEC「自己申告で最適と言わない」を型で強制.
 
-    proven_optimal は材料軸 gap=0 かつ LB=解値 のときだけ True.
-    setup_proven は段取り軸が設定モデルB で証明済みか（フォールバック上界なら False）.
+    proven_optimal は材料軸 gap=0（LP 下界と解値が一致）のときだけ True.
     """
 
     status: str
     mip_gap: float
     lp_lower_bound: float | None = None
     proven_optimal: bool = False
-    setup_proven: bool = False
     timed_out: bool = False
 
 
@@ -117,9 +115,12 @@ class Solution:
 
 @dataclass(frozen=True)
 class ParetoFrontier:
-    """材料軸 × 段取り軸の非劣解集合. solutions は z 昇順（= P 降順）."""
+    """解の入れ物（材料最適専用版）. 段取り軸を外したため solutions は常に長さ1（材料最適点）.
+
+    複数解を持てる構造とフィールド名は旧・段取り軸との互換のため残置（API/フロントの契約安定化）.
+    material_optimal_idx == recommended_index == 0 が常に成立する.
+    """
 
     solutions: tuple[Solution, ...]
     material_optimal_idx: int
-    setup_optimal_idx: int
     recommended_index: int

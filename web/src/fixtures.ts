@@ -13,7 +13,6 @@ export const SAMPLE: SolveOk = {
   "lower_bound_bins": 6,
   "pareto": {
     "material_optimal_idx": 0,
-    "setup_optimal_idx": 1,
     "recommended_index": 0,
     "solutions": [
       {
@@ -26,7 +25,6 @@ export const SAMPLE: SolveOk = {
           "mip_gap": 0.0,
           "lp_lower_bound": 6.0,
           "proven_optimal": true,
-          "setup_proven": true,
           "timed_out": false
         },
         "patterns": [
@@ -340,7 +338,6 @@ export const SAMPLE: SolveOk = {
           "mip_gap": 0.0,
           "lp_lower_bound": 6.0,
           "proven_optimal": false,
-          "setup_proven": true,
           "timed_out": false
         },
         "patterns": [
@@ -496,7 +493,6 @@ export const SAMPLE: SolveOk = {
     ]
   },
   "meta": {
-    "material_solver": "arcflow+HiGHS",
-    "setup_solver": "CP-SAT(configB)"
+    "material_solver": "arcflow+HiGHS"
   }
 } as SolveOk

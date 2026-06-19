@@ -21,16 +21,18 @@ def payload(length, kerf, demand, **options):
 
 
 def test_solve_from_dict_shape() -> None:
-    res = solve_from_dict(payload(2995, 10, [(990, 4, "A"), (560, 6, "B")], mode="pareto", max_extra_bars=2))
+    res = solve_from_dict(payload(2995, 10, [(990, 4, "A"), (560, 6, "B")]))
     assert res["status"] == "OK"
     assert res["input_echo"]["length"] == 2995
     assert res["input_echo"]["total_demand_length"] == 990 * 4 + 560 * 6
     assert res["lower_bound_bins"] >= 1
     par = res["pareto"]
-    assert len(par["solutions"]) >= 1
+    assert len(par["solutions"]) == 1
     s0 = par["solutions"][0]
     assert {"bars_used", "total_waste", "waste_ratio", "num_pattern_types", "optimality", "patterns"} <= s0.keys()
-    assert {"status", "mip_gap", "proven_optimal", "setup_proven", "timed_out"} <= s0["optimality"].keys()
+    assert {"status", "mip_gap", "proven_optimal", "timed_out"} <= s0["optimality"].keys()
+    assert "setup_proven" not in s0["optimality"]
+    assert "setup_optimal_idx" not in par
 
 
 def test_segments_sum_equals_stock_length() -> None:

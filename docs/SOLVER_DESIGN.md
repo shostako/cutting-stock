@@ -1,5 +1,9 @@
 # ソルバ核 設計（確定）
 
+> **2026-06-20 注**: 段取り軸（`setup_mip.py` = CP-SAT パターン種類最小化）と `pareto.py` は本リポから削除し、
+> 姉妹プロジェクト `pattern-stock` へ分離した。以下の段取り軸 / パレート掃引に関する設計記述は分離前の履歴。
+> 本リポは材料軸（arc-flow MIP on HiGHS, gap=0 証明）のみ。`oracle.py`（独立 CP-SAT 検証）は材料軸の保険として残置。
+
 > 本ドキュメントは実装の SSOT。`docs/SPEC.md`（問題仕様）と `docs/PLAN.md`（ビルド方針）を前提とする。
 > 設計は独立3案（列生成B&P / CP-SAT直接 / arc-flow ILP）を競わせ、3レンズ（最適性・実装可能性・アーキ）の
 > 審査パネルで統合して決定した（ultracode design phase, run `wf_62442123-8a4`）。

@@ -6,7 +6,6 @@ export interface SolveInput {
   length: number
   kerf: number
   demand: DemandRow[]
-  maxExtra: number
   timeLimit?: number | null
 }
 
@@ -14,7 +13,7 @@ function buildPayload(inp: SolveInput) {
   return {
     stock: { length: inp.length, kerf: inp.kerf },
     demand: inp.demand.map((d) => ({ length: d.length, qty: d.qty, label: d.label })),
-    options: { mode: 'pareto', max_extra_bars: inp.maxExtra, time_limit_sec: inp.timeLimit ?? null },
+    options: { time_limit_sec: inp.timeLimit ?? null },
   }
 }
 
