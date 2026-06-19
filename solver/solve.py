@@ -10,7 +10,7 @@ from solver.arcgraph import build_arcgraph
 from solver.bounds import validate_input
 from solver.decompose import decompose
 from solver.flow_mip import solve_flow
-from solver.models import Optimality, ParetoFrontier, Problem, Solution
+from solver.models import Optimality, Problem, Solution
 from solver.normalize import normalize
 
 # HiGHS は LP 下界が分数のインスタンスで分枝後、status=Optimal を返しつつ mip_gap に
@@ -55,14 +55,10 @@ def solve_material(problem: Problem, *, time_limit: float | None = None) -> Solu
     )
 
 
-def solve(problem: Problem, *, time_limit: float | None = None) -> ParetoFrontier:
-    """公開エントリ. 材料最適（使用本数最小）の単一解を ParetoFrontier に包んで返す.
+def solve(problem: Problem, *, time_limit: float | None = None) -> Solution:
+    """公開エントリ. 材料最適（使用本数最小）の単一解を返す.
 
     段取り軸（パターン種類最小化）は本ツールから分離済み（→ 姉妹プロジェクト pattern-stock）.
+    現状 solve_material の薄いエイリアスだが、外部 I/O 層（api.py）が叩く公開境界として温存する.
     """
-    sol = solve_material(problem, time_limit=time_limit)
-    return ParetoFrontier(
-        solutions=(sol,),
-        material_optimal_idx=0,
-        recommended_index=0,
-    )
+    return solve_material(problem, time_limit=time_limit)

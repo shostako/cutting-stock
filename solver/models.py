@@ -30,7 +30,7 @@ class DemandItem:
 
 @dataclass(frozen=True)
 class Problem:
-    """ソルバへの入力. solve(Problem) -> ParetoFrontier."""
+    """ソルバへの入力. solve(Problem) -> Solution."""
 
     stock: StockSpec
     demand: tuple[DemandItem, ...]
@@ -103,24 +103,11 @@ class Optimality:
 
 @dataclass(frozen=True)
 class Solution:
-    """1 つのパレート点（ある本数バジェットでの解）."""
+    """材料最適解（使用本数最小の切り方一式）. solve() の戻り値."""
 
     bars_used: int                  # z
     patterns: tuple[Pattern, ...]
     total_waste: int
     waste_ratio: float
-    num_pattern_types: int          # P
+    num_pattern_types: int          # P（切り方の種類数. 最適化対象ではなく結果の属性）
     optimality: Optimality
-
-
-@dataclass(frozen=True)
-class ParetoFrontier:
-    """解の入れ物（材料最適専用版）. 段取り軸を外したため solutions は常に長さ1（材料最適点）.
-
-    複数解を持てる構造とフィールド名は旧・段取り軸との互換のため残置（API/フロントの契約安定化）.
-    material_optimal_idx == recommended_index == 0 が常に成立する.
-    """
-
-    solutions: tuple[Solution, ...]
-    material_optimal_idx: int
-    recommended_index: int

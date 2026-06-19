@@ -94,7 +94,7 @@ def _serialize_solution(sol: Solution, kerf: int, labels: dict[int, str]) -> dic
     }
 
 
-def _serialize_frontier(problem: Problem, front) -> dict[str, Any]:
+def _serialize_result(problem: Problem, sol: Solution) -> dict[str, Any]:
     kerf = problem.stock.kerf
     labels = {it.length: it.label for it in problem.demand}
     return {
@@ -106,11 +106,7 @@ def _serialize_frontier(problem: Problem, front) -> dict[str, Any]:
             "total_demand_length": sum(it.length * it.qty for it in problem.demand),
         },
         "lower_bound_bins": continuous_lower_bound(problem),
-        "pareto": {
-            "material_optimal_idx": front.material_optimal_idx,
-            "recommended_index": front.recommended_index,
-            "solutions": [_serialize_solution(s, kerf, labels) for s in front.solutions],
-        },
+        "solution": _serialize_solution(sol, kerf, labels),
         "meta": dict(_META),
     }
 
@@ -131,11 +127,11 @@ def solve_from_dict(payload: dict[str, Any]) -> dict[str, Any]:
         time_limit = float(time_limit)
 
     try:
-        front = solve(problem, time_limit=time_limit)
+        sol = solve(problem, time_limit=time_limit)
     except SolverError as e:
         return _error(e.code, e.message)
 
-    return _serialize_frontier(problem, front)
+    return _serialize_result(problem, sol)
 
 
 def validate_from_dict(payload: dict[str, Any]) -> dict[str, Any]:

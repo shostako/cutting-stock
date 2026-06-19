@@ -56,7 +56,7 @@ function App() {
   }, [solvedInput.demand])
 
   const colorOf = useMemo(() => {
-    const lengths = result.pareto.solutions.flatMap((s) => s.patterns.flatMap((p) => p.cuts))
+    const lengths = result.solution.patterns.flatMap((p) => p.cuts)
     return makeColorOf(lengths)
   }, [result])
 
@@ -87,7 +87,7 @@ function App() {
     }
   }
 
-  const sol = result.pareto.solutions[0]
+  const sol = result.solution
   const production = useMemo(() => computeProduction(solvedInput.demand, sol), [solvedInput.demand, sol])
   const hasOver = production.some((r) => r.over > 0)
   const dateStr = new Date().toLocaleDateString('ja-JP')

@@ -26,18 +26,17 @@ def test_solve_from_dict_shape() -> None:
     assert res["input_echo"]["length"] == 2995
     assert res["input_echo"]["total_demand_length"] == 990 * 4 + 560 * 6
     assert res["lower_bound_bins"] >= 1
-    par = res["pareto"]
-    assert len(par["solutions"]) == 1
-    s0 = par["solutions"][0]
+    # 材料最適専用版: 単一解を res["solution"] で返す（旧 "pareto" 包みは廃止）
+    assert "pareto" not in res
+    s0 = res["solution"]
     assert {"bars_used", "total_waste", "waste_ratio", "num_pattern_types", "optimality", "patterns"} <= s0.keys()
     assert {"status", "mip_gap", "proven_optimal", "timed_out"} <= s0["optimality"].keys()
     assert "setup_proven" not in s0["optimality"]
-    assert "setup_optimal_idx" not in par
 
 
 def test_segments_sum_equals_stock_length() -> None:
     res = solve_from_dict(payload(2995, 10, [(990, 4, "A"), (560, 6, "B")]))
-    for sol in res["pareto"]["solutions"]:
+    for sol in [res["solution"]]:
         for pat in sol["patterns"]:
             total = sum(seg["length"] for seg in pat["segments"])
             assert total == pat["stock_length"], f"segments sum {total} != {pat['stock_length']}"
@@ -97,7 +96,7 @@ def test_cli_roundtrip(tmp_path, capsys) -> None:
     out = json.loads(capsys.readouterr().out)
     assert code == 0
     assert out["status"] == "OK"
-    assert out["pareto"]["solutions"][0]["bars_used"] == 3
+    assert out["solution"]["bars_used"] == 3
 
 
 def test_cli_error_exit_code(tmp_path, capsys) -> None:

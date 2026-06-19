@@ -36,20 +36,12 @@ export interface Solution {
   patterns: Pattern[]
 }
 
-// 材料最適専用版では solutions は常に長さ1（段取り軸は pattern-stock へ分離）。
-// フィールド名は API 契約安定化のため残置（material_optimal_idx == recommended_index == 0）。
-export interface ParetoFrontier {
-  material_optimal_idx: number
-  recommended_index: number
-  solutions: Solution[]
-}
-
 export interface SolveOk {
   status: 'OK'
   validation: string[]
   input_echo: { length: number; kerf: number; total_demand_length: number }
   lower_bound_bins: number
-  pareto: ParetoFrontier
+  solution: Solution   // 材料最適の単一解（段取り軸は pattern-stock へ分離）
   meta: Record<string, string>
 }
 
