@@ -91,7 +91,7 @@
 .seg-piece { box-shadow: inset -1px 0 0 rgba(255,255,255,0.6); }
 .seg-kerf { min-width: 2px; }
 .seg-waste { background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,0,0,0.06) 4px, rgba(0,0,0,0.06) 8px); }
-.seg-label { font-size: 11px; color: #fff; font-weight: 600; text-shadow: 0 0 2px rgba(0,0,0,0.4); pointer-events: none; }
+.seg-label { font-size: 15px; color: #fff; font-weight: 700; text-shadow: 0 0 2px rgba(0,0,0,0.55); pointer-events: none; }
 .bar-scale { display: flex; justify-content: space-between; font-size: 10px; color: var(--ink-soft); margin-top: 2px; font-variant-numeric: tabular-nums; }
 
 .totals { margin-top: 16px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-soft); }
@@ -109,9 +109,10 @@
 .report-btn { font-size: 13px; padding: 5px 12px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink); cursor: pointer; font-weight: 600; }
 .report-btn:hover { background: var(--line-soft); }
 
-.example-load { margin-bottom: 12px; }
-.example-btn { width: 100%; font-size: 13px; padding: 7px 12px; border: 1px dashed var(--accent); border-radius: 6px; background: var(--accent-soft); color: var(--accent); cursor: pointer; font-weight: 600; }
-.example-btn:hover { background: var(--accent); color: #fff; }
+.demo-load { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
+.demo-caption { font-size: 11px; color: var(--ink-soft); }
+.demo-btn { font-size: 12px; padding: 4px 10px; border: 1px dashed var(--accent); border-radius: 6px; background: var(--accent-soft); color: var(--accent); cursor: pointer; font-weight: 600; }
+.demo-btn:hover { background: var(--accent); color: #fff; }
 
 .overproduction { margin-top: 14px; }
 .over-none { font-size: 12px; color: var(--ink-soft); margin: 6px 0 0; }

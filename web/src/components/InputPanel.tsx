@@ -8,8 +8,8 @@ export interface InputState {
   labelScheme: LabelScheme   // ラベル付与方式（既定=長さ）。manual のみ手入力
 }
 
-// Wikipedia "Cutting stock problem" 製紙ロール代表例（既知最適 73本 / 廃棄0.401% / 証明付き）
-const WIKIPEDIA_EXAMPLE: InputState = {
+// demo1: Wikipedia "Cutting stock problem" 製紙ロール代表例（既知最適 73本 / 廃棄0.401% / 切り方10通り）
+const DEMO1: InputState = {
   length: 5600,
   kerf: 0,
   labelScheme: 'length',
@@ -28,6 +28,37 @@ const WIKIPEDIA_EXAMPLE: InputState = {
     { length: 2150, qty: 18, label: 'L' },
     { length: 2200, qty: 20, label: 'M' },
   ],
+}
+
+// demo2: 小規模な既定例（カット代 3mm）
+const DEMO2: InputState = {
+  length: 1200,
+  kerf: 3,
+  labelScheme: 'length',
+  demand: [
+    { length: 500, qty: 4, label: 'A' },
+    { length: 340, qty: 6, label: 'B' },
+    { length: 290, qty: 5, label: 'C' },
+    { length: 210, qty: 7, label: 'D' },
+  ],
+}
+
+// demo3: ランダム生成（規模を抑える: 原材料1000–2399mm / 品種3–5 / 各2–8本 / ピース≤原材料の6割）
+function makeRandomDemo(): InputState {
+  const length = 1000 + Math.floor(Math.random() * 1400)
+  const kerf = [0, 3, 5][Math.floor(Math.random() * 3)]
+  const nTypes = 3 + Math.floor(Math.random() * 3)
+  const maxPiece = Math.floor(length * 0.6)
+  const lengths = new Set<number>()
+  let guard = 0
+  while (lengths.size < nTypes && guard++ < 100) {
+    const v = 150 + Math.floor(Math.random() * (maxPiece - 150))
+    lengths.add(Math.round(v / 10) * 10)
+  }
+  const demand = Array.from(lengths)
+    .sort((a, b) => b - a)
+    .map((l) => ({ length: l, qty: 2 + Math.floor(Math.random() * 7), label: '' }))
+  return { length, kerf, labelScheme: 'length', demand }
 }
 
 export function InputPanel({
@@ -57,10 +88,11 @@ export function InputPanel({
 
   return (
     <div className="input-panel">
-      <div className="example-load">
-        <button className="example-btn" onClick={() => onChange(WIKIPEDIA_EXAMPLE)}>
-          Wikipedia板取り例題を読み込む
-        </button>
+      <div className="demo-load">
+        <span className="demo-caption">デモ</span>
+        <button className="demo-btn" onClick={() => onChange(DEMO1)} title="Wikipedia板取り代表例（73本 / 切り方10通り）">demo1</button>
+        <button className="demo-btn" onClick={() => onChange(DEMO2)} title="小規模な既定例（カット代3mm）">demo2</button>
+        <button className="demo-btn" onClick={() => onChange(makeRandomDemo())} title="ランダム生成（押すたびに変わる）">demo3</button>
       </div>
       <section>
         <h2>原材料（初期設定）</h2>
