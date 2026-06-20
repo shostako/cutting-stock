@@ -97,18 +97,17 @@ export function InputPanel({
       <section>
         <h2>原材料（初期設定）</h2>
         <label className="field">
-          原材料長 L
+          原材料長
           <input type="number" value={state.length} min={1}
             onChange={(e) => onChange({ ...state, length: Number(e.target.value) })} />
           <span className="unit">mm</span>
         </label>
         <label className="field">
-          カット代 k
+          <span>カット代<span className="field-hint">（刃の厚み分）</span></span>
           <input type="number" value={state.kerf} min={0}
             onChange={(e) => onChange({ ...state, kerf: Number(e.target.value) })} />
           <span className="unit">mm</span>
         </label>
-        <p className="note">※ 1カット = 切るたび k を消費（Model A）</p>
       </section>
 
       <section>

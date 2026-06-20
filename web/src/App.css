@@ -7,9 +7,7 @@
 }
 .app-header h1 { font-size: 18px; }
 .header-right { display: flex; align-items: center; gap: 16px; font-size: 12px; color: var(--ink-soft); }
-.health.ok { color: var(--ok); }
-.health.ng { color: var(--ink-soft); }
-.meta { font-family: var(--mono); }
+.health-warn { color: var(--warn); font-weight: 600; }
 
 /* ── レイアウト: 左操作 / 右主役 ── */
 .layout { display: grid; grid-template-columns: 360px 1fr; gap: 16px; padding: 16px; align-items: start; }
@@ -26,6 +24,7 @@
 .field { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .field input { width: 90px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 5px; text-align: right; }
 .field .unit { color: var(--ink-soft); font-size: 12px; }
+.field-hint { font-size: 11px; color: var(--ink-soft); margin-left: 1px; }
 .note { font-size: 11px; color: var(--ink-soft); margin: 4px 0 0; }
 
 .demand-table { width: 100%; border-collapse: collapse; }

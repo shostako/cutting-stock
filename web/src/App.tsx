@@ -74,6 +74,7 @@ function App() {
     const eff: InputState = { ...input, demand: input.demand.map((d, i) => ({ ...d, label: labels[i] })) }
     try {
       const res = await solve(eff, ac.signal)
+      setHealthy(true)   // 応答が返った = サーバー到達可能
       if (res.status === 'ERROR') {
         setError(`${ERROR_LABEL[res.error.code] ?? res.error.code}: ${res.error.message}`)
       } else {
@@ -86,7 +87,10 @@ function App() {
         } catch { /* validate は補助、失敗は無視 */ }
       }
     } catch (e) {
-      if ((e as Error).name !== 'AbortError') setError(`通信エラー: ${(e as Error).message}（バックエンド未起動かも）`)
+      if ((e as Error).name !== 'AbortError') {
+        setHealthy(false)
+        setError(`サーバーに接続できません（${(e as Error).message}）`)
+      }
     } finally {
       setLoading(false)
     }
@@ -114,10 +118,9 @@ function App() {
       <header className="app-header">
         <h1>カッティングストック最適化</h1>
         <div className="header-right">
-          <span className={`health ${healthy ? 'ok' : healthy === false ? 'ng' : ''}`}>
-            {healthy ? '● API接続' : healthy === false ? '○ API未接続(fixture表示)' : '…'}
-          </span>
-          <span className="meta">{result.meta?.material_solver}</span>
+          {healthy === false && (
+            <span className="health-warn">⚠ サーバーに接続できません（サンプル表示中）</span>
+          )}
         </div>
       </header>
 
