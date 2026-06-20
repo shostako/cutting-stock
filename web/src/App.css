@@ -51,6 +51,7 @@
 .metrics-card th { text-align: left; color: var(--ink-soft); font-weight: 500; padding: 3px 0; width: 40%; }
 .metrics-card td { text-align: right; font-variant-numeric: tabular-nums; padding: 3px 0; }
 .metrics-card .lb { color: var(--ink-soft); font-size: 11px; margin-left: 4px; }
+.metrics-card .badge-cell { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
 
 /* ── パターン表示（右主役）── */
 .right-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }

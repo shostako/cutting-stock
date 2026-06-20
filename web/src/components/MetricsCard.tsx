@@ -1,6 +1,6 @@
 import type { Solution } from '../api/types'
 import { fmt, pct } from '../format'
-import { OptimalityBadge } from './OptimalityBadge'
+import { OptimalityBadge, PatternsBadge } from './OptimalityBadge'
 
 export function MetricsCard({
   solution,
@@ -21,7 +21,7 @@ export function MetricsCard({
           <tr><th>総廃棄</th><td>{fmt(solution.total_waste)} mm</td></tr>
           <tr><th>廃棄率</th><td>{pct(solution.waste_ratio)}</td></tr>
           <tr><th>切り方の数</th><td>{solution.num_pattern_types} 通り</td></tr>
-          <tr><th>最適性</th><td><OptimalityBadge o={solution.optimality} /></td></tr>
+          <tr><th>最適性</th><td className="badge-cell"><OptimalityBadge o={solution.optimality} /><PatternsBadge o={solution.optimality} /></td></tr>
         </tbody>
       </table>
     </div>

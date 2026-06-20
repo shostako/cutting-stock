@@ -13,7 +13,7 @@ from solver.errors import InvalidInput, SolverError
 from solver.models import DemandItem, Pattern, Problem, Solution, StockSpec
 from solver.solve import solve
 
-_META = {"material_solver": "arcflow+HiGHS"}
+_META = {"material_solver": "arcflow+HiGHS", "pattern_solver": "CP-SAT(pool-MIP)"}
 
 
 def parse_problem(payload: dict[str, Any]) -> tuple[Problem, dict[str, Any]]:
@@ -88,6 +88,7 @@ def _serialize_solution(sol: Solution, kerf: int, labels: dict[int, str]) -> dic
             "mip_gap": o.mip_gap,
             "lp_lower_bound": o.lp_lower_bound,
             "proven_optimal": o.proven_optimal,
+            "patterns_min_proven": o.patterns_min_proven,
             "timed_out": o.timed_out,
         },
         "patterns": [_serialize_pattern(p, kerf, labels) for p in sol.patterns],

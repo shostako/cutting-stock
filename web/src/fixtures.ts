@@ -1,5 +1,5 @@
 // 実ソルバ(solver.api)の出力をそのまま埋め込んだ開発用フィクスチャ（スキーマ完全一致）。
-// バックエンド未起動でもUI単体で描画・確認できる。材料最適の単一解。
+// バックエンド未起動でもUI単体で描画・確認できる。辞書式最適化の単一解（本数最小→切り方最小）。
 import type { SolveOk } from './api/types'
 
 export const SAMPLE: SolveOk = {
@@ -21,6 +21,7 @@ export const SAMPLE: SolveOk = {
       "mip_gap": 0.0,
       "lp_lower_bound": 6.0,
       "proven_optimal": true,
+      "patterns_min_proven": true,
       "timed_out": false
     },
     "patterns": [
@@ -325,6 +326,7 @@ export const SAMPLE: SolveOk = {
     ]
   },
   "meta": {
-    "material_solver": "arcflow+HiGHS"
+    "material_solver": "arcflow+HiGHS",
+    "pattern_solver": "CP-SAT(pool-MIP)"
   }
 }

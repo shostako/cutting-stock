@@ -30,8 +30,7 @@ def test_solve_from_dict_shape() -> None:
     assert "pareto" not in res
     s0 = res["solution"]
     assert {"bars_used", "total_waste", "waste_ratio", "num_pattern_types", "optimality", "patterns"} <= s0.keys()
-    assert {"status", "mip_gap", "proven_optimal", "timed_out"} <= s0["optimality"].keys()
-    assert "setup_proven" not in s0["optimality"]
+    assert {"status", "mip_gap", "proven_optimal", "patterns_min_proven", "timed_out"} <= s0["optimality"].keys()
 
 
 def test_segments_sum_equals_stock_length() -> None:

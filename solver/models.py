@@ -91,13 +91,17 @@ class Pattern:
 class Optimality:
     """最適性の根拠（全解に必ず添付）. SPEC「自己申告で最適と言わない」を型で強制.
 
-    proven_optimal は材料軸 gap=0（LP 下界と解値が一致）のときだけ True.
+    辞書式最適化の2段の証明を保持する:
+    - proven_optimal: 使用本数が最小であること（材料軸 arc-flow MIP の gap=0）.
+    - patterns_min_proven: その本数で切り方（パターン種類）の数が最小であること
+      （CP-SAT 候補プール選択MIP が証明）. フォールバック分解なら False.
     """
 
     status: str
     mip_gap: float
     lp_lower_bound: float | None = None
     proven_optimal: bool = False
+    patterns_min_proven: bool = False
     timed_out: bool = False
 
 

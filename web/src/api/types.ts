@@ -23,7 +23,8 @@ export interface Optimality {
   status: string
   mip_gap: number
   lp_lower_bound: number | null
-  proven_optimal: boolean
+  proven_optimal: boolean        // 使用本数が最小（材料軸 gap=0）
+  patterns_min_proven: boolean   // その本数で切り方の種類数も最小（CP-SAT 証明）
   timed_out: boolean
 }
 
