@@ -1,15 +1,18 @@
 import type { DemandRow } from '../api/types'
+import { LABEL_SCHEMES, resolveLabels, type LabelScheme } from '../labels'
 
 export interface InputState {
   length: number
   kerf: number
   demand: DemandRow[]
+  labelScheme: LabelScheme   // ラベル付与方式（既定=長さ）。manual のみ手入力
 }
 
 // Wikipedia "Cutting stock problem" 製紙ロール代表例（既知最適 73本 / 廃棄0.401% / 証明付き）
 const WIKIPEDIA_EXAMPLE: InputState = {
   length: 5600,
   kerf: 0,
+  labelScheme: 'length',
   demand: [
     { length: 1380, qty: 22, label: 'A' },
     { length: 1520, qty: 25, label: 'B' },
@@ -49,6 +52,9 @@ export function InputPanel({
   const addRow = () => onChange({ ...state, demand: [...state.demand, { length: 100, qty: 1, label: '' }] })
   const removeRow = (i: number) => onChange({ ...state, demand: state.demand.filter((_, j) => j !== i) })
 
+  const manual = state.labelScheme === 'manual'
+  const shownLabels = resolveLabels(state.demand, state.labelScheme)
+
   return (
     <div className="input-panel">
       <div className="example-load">
@@ -75,6 +81,20 @@ export function InputPanel({
 
       <section>
         <h2>需要</h2>
+        <div className="label-scheme">
+          <span className="ls-caption">ラベル</span>
+          <div className="ls-seg">
+            {LABEL_SCHEMES.map((s) => (
+              <button
+                key={s.key}
+                className={`ls-btn ${state.labelScheme === s.key ? 'active' : ''}`}
+                onClick={() => onChange({ ...state, labelScheme: s.key })}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <table className="demand-table">
           <thead>
             <tr><th>長さ</th><th>本数</th><th>ラベル</th><th></th></tr>
@@ -84,7 +104,13 @@ export function InputPanel({
               <tr key={i}>
                 <td><input type="number" value={d.length} min={1} onChange={(e) => setDemand(i, { length: Number(e.target.value) })} /></td>
                 <td><input type="number" value={d.qty} min={1} onChange={(e) => setDemand(i, { qty: Number(e.target.value) })} /></td>
-                <td><input type="text" value={d.label} maxLength={4} onChange={(e) => setDemand(i, { label: e.target.value })} /></td>
+                <td>
+                  {manual ? (
+                    <input type="text" value={d.label} maxLength={4} onChange={(e) => setDemand(i, { label: e.target.value })} />
+                  ) : (
+                    <span className="label-auto">{shownLabels[i]}</span>
+                  )}
+                </td>
                 <td><button className="rm" onClick={() => removeRow(i)} aria-label="削除">✕</button></td>
               </tr>
             ))}

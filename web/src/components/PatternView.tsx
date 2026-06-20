@@ -16,12 +16,15 @@ export function Legend({
 }) {
   return (
     <div className="legend">
-      {lengths.map((l) => (
-        <span className="legend-item" key={l}>
-          <span className="swatch" style={{ background: colorOf(l) }} />
-          {labelOf(l) || l}:{l}
-        </span>
-      ))}
+      {lengths.map((l) => {
+        const lab = labelOf(l)
+        return (
+          <span className="legend-item" key={l}>
+            <span className="swatch" style={{ background: colorOf(l) }} />
+            {lab && lab !== String(l) ? `${lab}:${l}` : l}
+          </span>
+        )
+      })}
       <span className="legend-item">
         <span className="swatch" style={{ background: KERF_COLOR }} />
         カット代（視認のため最小幅）

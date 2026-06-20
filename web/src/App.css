@@ -37,6 +37,14 @@
 .rm:hover { color: #c0392b; }
 .add-row { margin-top: 6px; background: none; border: 1px dashed var(--line); border-radius: 5px; padding: 5px 10px; color: var(--accent); cursor: pointer; }
 
+.label-scheme { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.ls-caption { font-size: 11px; color: var(--ink-soft); }
+.ls-seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.ls-btn { font-size: 11px; padding: 4px 9px; background: #fff; color: var(--ink-soft); border: none; border-left: 1px solid var(--line); cursor: pointer; }
+.ls-btn:first-child { border-left: none; }
+.ls-btn.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.label-auto { display: inline-block; min-width: 48px; font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
 .solve-btn {
   width: 100%; margin-top: 4px; padding: 9px; border: none; border-radius: 6px;
   background: var(--accent); color: #fff; font-weight: 600; cursor: pointer;

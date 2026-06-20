@@ -8,6 +8,7 @@ import { InputPanel, type InputState } from './components/InputPanel'
 import { MetricsCard } from './components/MetricsCard'
 import { PatternView } from './components/PatternView'
 import { computeProduction, buildPlanCsv, downloadCsv } from './report'
+import { resolveLabels } from './labels'
 import { fmt } from './format'
 
 const ERROR_LABEL: Record<string, string> = {
@@ -19,6 +20,7 @@ const ERROR_LABEL: Record<string, string> = {
 const INITIAL: InputState = {
   length: 1200,
   kerf: 5,
+  labelScheme: 'length',
   demand: [
     { length: 500, qty: 4, label: 'A' },
     { length: 340, qty: 6, label: 'B' },
@@ -52,7 +54,7 @@ function App() {
   const labelOf = useMemo(() => {
     const m = new Map<number, string>()
     for (const d of solvedInput.demand) m.set(d.length, d.label)
-    return (l: number) => m.get(l) ?? ''
+    return (l: number) => m.get(l) ?? String(l)
   }, [solvedInput.demand])
 
   const colorOf = useMemo(() => {
@@ -67,16 +69,19 @@ function App() {
     setLoading(true)
     setError(null)
     setFeasibility(null)
+    // スキームに応じて解決したラベルを demand に焼き込む（凡例・帯・指示書・CSV を全て一致させる）
+    const labels = resolveLabels(input.demand, input.labelScheme)
+    const eff: InputState = { ...input, demand: input.demand.map((d, i) => ({ ...d, label: labels[i] })) }
     try {
-      const res = await solve(input, ac.signal)
+      const res = await solve(eff, ac.signal)
       if (res.status === 'ERROR') {
         setError(`${ERROR_LABEL[res.error.code] ?? res.error.code}: ${res.error.message}`)
       } else {
         setResult(res)
-        setSolvedInput(input)
+        setSolvedInput(eff)
         setDirty(false)
         try {
-          const v = await validate(input)
+          const v = await validate(eff)
           setFeasibility(v.feasible ? `実行可能（最低 ${v.lower_bound_bins} 本必要）` : null)
         } catch { /* validate は補助、失敗は無視 */ }
       }
