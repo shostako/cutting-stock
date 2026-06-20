@@ -74,7 +74,7 @@ export function PatternView({
       </div>
 
       <div className="totals">
-        合計: 原材料 {solution.bars_used}本 / 総廃棄 {fmt(solution.total_waste)} mm / 1帯 = 原材料1本
+        合計: 原材料 {solution.bars_used}本 / 総廃棄 {fmt(solution.total_waste)} mm
       </div>
     </div>
   )

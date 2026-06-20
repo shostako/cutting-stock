@@ -11,7 +11,7 @@ export function MetricsCard({
 }) {
   return (
     <div className="metrics-card">
-      <h3>この計画</h3>
+      <h3>計算結果</h3>
       <table>
         <tbody>
           <tr>
