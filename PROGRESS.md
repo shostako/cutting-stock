@@ -52,38 +52,23 @@
 
 ## 確定事項
 
-- 1D-CSP、最適/準最適。Web GUI（React+Vite）+ Python（OR-Tools）ソルバ核、両者は分離。
-- 主目的: 使用本数(=単一長なら廃棄量)最小。トレードオフ: 材料最適 vs 段取り(パターン種類数)最少。パレート前線を提示。
+- 1D-CSP。Web GUI（React+Vite+TS）+ Python（HiGHS / OR-Tools）ソルバ核、両者は分離。
+- 目的（2026-06-20 確定）: **辞書式2段** = ① 使用本数最小（材料最適）→ ② その本数で切り方(パターン種類数)最小。両方証明付き・**単一解**。トレードオフ/パレートは持たない。
 
 ## 次セッションへの引き継ぎ（最重要）
 
-**復帰手順（2026-06-17, M0-M5完了 + M7最終レビュー完了。M6のみ据え置き）:**
-- **M0-M5 全完了 + M7 完了**。エンドツーエンドで動く・本番稼働中。テスト55件 green。
-  - **A: GitHub push** — ✅完了（public/MIT, main, https://github.com/shostako/cutting-stock）。
-  - **B: スマホ用デプロイ** — ✅完了（HF Spaces, https://shostako-cutting-stock.hf.space 稼働中。再デプロイ= `git push space main`）。
-  - **M7 最終レビュー（ウルトラコード）** — ✅完了（2026-06-17）。ソルバ核健全、bug#2のみ修正、残り8件は off-default パスとして文書化。詳細 `docs/SOLVER_DESIGN.md`「M7最終レビュー結果」節（未修正バグの所在表＝将来直すときの地図）。
-  - **C: M6 複数原材料長** — **据え置き（ユーザー決定 2026-06-17: 締めに回す）**。再開するなら確定方針は `docs/SOLVER_DESIGN.md` M6 節（材料目的=総廃棄最小 / 在庫上限+無制限両対応 / 段取り軸もフル / API要素1後方互換）。**ユーザー指示: M6でエラーになったら捨てて次へ、深追いしない。**
-- 注意: HF Space は `origin/main`（GitHub）と同期させたい。**コード変更時は `git push origin main && git push space main` の両方**（HF push でリビルド走る。docのみ変更はHF push不要）。
-- 健全性確認: `uv run pytest`（54件） / `cd web && npm run build`。dev サーバ背景稼働の可能性（:8000/:5173, 落ちてたら `docs/GUI_DESIGN.md` 末尾手順で再起動）。
-- 実装SSOT: ソルバ=`docs/SOLVER_DESIGN.md` / GUI=`docs/GUI_DESIGN.md`＋`web/`。依存 highspy1.14 / ortools9.15(snake_case) / fastapi / React+Vite。
+**現状（2026-06-20）: 辞書式に再構成＋GUI を現場向けに磨き込み、全て本番反映済み。機能的に一区切り、pending タスクなし。**
 
-次の一手:
-1. ~~カット代の数え方の定義を確定し `docs/SPEC.md` に追記。~~ → 完了（Model A 確定）。
-2. ~~ソルバの設計を詰める（ウルトラコード）。~~ → 完了（`docs/SOLVER_DESIGN.md` に確定）。
-3. ~~M0 セットアップ。~~ → 完了。
-4. ~~M1 材料最適コア。~~ → 完了（arc-flow on HiGHS, gap=0, テスト13件 green）。
-5. ~~M2 正当性検証（ウルトラコード）。~~ → **PASS**（縮約の最適解取りこぼしゼロ／report層のfloat比較バグを1件修正）。
-6. ~~M3 段取り軸 + パレート。~~ → 完了（setup_mip + pareto, トレードオフ再現）。
-7. ~~M4 API/CLI境界。~~ → 完了（api/cli/http, 54テスト green）。サーバ起動: `uv run uvicorn solver.http:app`。
-8. ~~M5 GUI コア。~~ → 完成（Vite+React+TS, 自前チャート, パレート連動, 正直バッジ）。起動: 端末1 `uv run uvicorn solver.http:app --port 8000` / 端末2 `cd web && npm run dev`。
-   （Playwrightスクショ用に headless chromium + Noto CJK を環境に導入済み。`~/.cache/ms-playwright` に build1200→1228 symlink）
-9. ~~M5 仕上げ（比較モード+磨き）。~~ → 完了。
-10. **次の選択肢（ユーザー判断）**:
-   - M6 複数原材料長（arcgraphをL引数化しS並置・需要横断充足。**既定材料目的を要確認**）
-   - **M7 最終レビュー（ウルトラコード検証ゲート）**: 正確性・性能・エッジ・UIを次元分けで敵対検証
-   - 本番デプロイ/配布、または現状で一区切り
+- **ソルバ**: `solve()` = 辞書式2段（① arc-flow on HiGHS で本数最小・gap=0証明 → ② `setup_mip` の CP-SAT 候補プール選択MIP で本数固定のまま切り方最小・証明）。`pareto.py` は廃止、答えは**単一解**。第2段は安全上限30s＋材料分解フォールバック。Wikipedia 例題で **73本/廃棄0.401%/切り方10通り** を両証明付き到達（約2.6s）。
+- **GUI 磨き込み（全デプロイ済み）**: ラベル自動付与（長さ/英字/数字/手動・既定=長さ・長さ降順採番、`web/src/labels.ts`）、デモ3択（demo1=Wikipedia / demo2=既定kerf3 / demo3=ランダム）、帯ラベル拡大(15px)、開発者ジャーゴン撤去（記号L/k・Model A注記・ソルバ名表示）、ヘルスは異常時のみ警告、ライト/ダーク切替（OS追従・localStorage記憶・印刷はライト固定、`index.css` の `:root[data-theme="dark"]`）、スマホ対応（≤1024pxで1カラム）、見出し「計算結果」、「過剰生産なし」表示は削除。
+- **姉妹 pattern-stock は削除済み**（辞書式で cutting-stock が両目的を内包＝重複）。旧二軸パレートUIは git 履歴 `f66f8d2` に残る。
+- **デプロイ**: GitHub https://github.com/shostako/cutting-stock / HF https://shostako-cutting-stock.hf.space。**コード変更時は `git push origin main && git push space main` の両方**（HF push でリビルド）。**docのみ変更でも HF push で README が Space カードに反映される**。HF認証は GIT_ASKPASS（user=`shostako`, pass=`~/.cache/huggingface/token`）。**本ユーザーは cutting-stock では確認なしのデプロイを常時許可**（リモート作業で本番URLでしか確認できないため）。ただしデプロイ後の verify-by-effect（配信バンドルのハッシュ/新文字列フリップを curl ポーリング）は必須。
+- **健全性**: `uv run pytest`（51件 + slow材料/辞書式ベンチ）/ `cd web && npm run build`。Playwright headless スクショ可（`~/.cache/ms-playwright`）。ローカル起動: 端末1 `uv run uvicorn solver.http:app --port 8000` / 端末2 `cd web && npm run dev`。
+- 実装SSOT: ソルバ=`docs/SOLVER_DESIGN.md`（旧二軸パレートの記述はバナーで履歴扱い）/ GUI=`docs/GUI_DESIGN.md`＋`web/`。依存 highspy / ortools(snake_case) / fastapi / React+Vite+TS。
 
-検証の取りこぼし（M3前/M7で塞ぐと堅い、PASS判定のスコープ外）:
-- 大規模域（types>10, qty>25, ビン数>16）は oracle/総当たりが証明不能で未踏。縮約の正しさは規模非依存の構造性質なので PASS は保つ。
-- PIECE_TOO_LONG 経路は committed テストで確認済みだが掃引では未発火（正常系集中）。
+次の一手: 機能的には一区切り。追加の磨き込み or 新機能はユーザー指示待ち。
+（未追跡: `docs/RESOLUTION-2026-06-18.md` = 段取り軸修正の記録。`setup_mip` 復活で内容は今も有効だが、リポに追跡するかは保留。）
+
+既知の限界（将来詰めるなら）:
+- 大規模域（types>10 等で maximal パターン列挙が `_POOL_CAP` 超）は config-B フォールバックに退避し、proven が立たない可能性。30s 上限超で材料分解にフォールバック（本数の最適性は常に保つ）。
 - kerf 定義（Model A）の妥当性は crosscheck の射程外（両ソルバが同定義共有のため）。上位設計の前提。

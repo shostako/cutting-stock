@@ -33,7 +33,7 @@ pinned: false
 |----|------|------|
 | ソルバ核 | Python 3.12 + [HiGHS](https://highs.dev/)（`highspy`）/ [OR-Tools CP-SAT](https://developers.google.com/optimization) | 第1段 = Arc-flow MIP（使用本数最小・gap=0 証明）/ 第2段 = CP-SAT 候補プール選択MIP（本数固定で切り方の種類最小・証明付き）。`oracle.py` が独立 CP-SAT で本数を裏取り（CI 保険） |
 | API 境界 | FastAPI | `/solve` `/validate` `/healthz`。JSON の入出力はここだけ |
-| GUI | React + Vite + TypeScript | パターン帯・カット指示書（印刷/CSV）・過剰生産表示・最適性バッジ。チャートは全て自前（依存は react のみ） |
+| GUI | React + Vite + TypeScript | 比率忠実な棒グラフ／カット指示書（印刷・CSV）／2段の最適性証明バッジ／ラベル方式選択（長さ・英字・数字・手動）／デモ例（Wikipedia 板取り等）／ライト・ダーク切替（OS 追従・記憶）／スマホ対応／過剰生産は出た時のみ警告。チャートは全て自前（依存は react のみ） |
 
 カット代は **Model A**（各取りに1カット、`Σℓ_j + m·k ≤ L`）。詳細は [`docs/SPEC.md`](docs/SPEC.md)。
 
