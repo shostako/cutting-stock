@@ -183,31 +183,27 @@ function App() {
           <div className={dirty ? 'stale-content' : undefined}>
             <PatternView solution={sol} colorOf={colorOf} labelOf={labelOf} />
           </div>
-          <div className="overproduction">
-            {hasOver ? (
-              <>
-                <h3 className="over-title">過剰生産（廃棄に計上されます）</h3>
-                <table className="over-table">
-                  <thead>
-                    <tr><th>品目</th><th>長さ</th><th>需要</th><th>生産</th><th>過剰</th></tr>
-                  </thead>
-                  <tbody>
-                    {production.filter((r) => r.over > 0).map((r) => (
-                      <tr key={r.length}>
-                        <td>{r.label || r.length}</td>
-                        <td>{r.length} mm</td>
-                        <td>{r.demand}</td>
-                        <td>{r.produced}</td>
-                        <td className="over-cell">+{r.over}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </>
-            ) : (
-              <p className="over-none">過剰生産なし（需要ぴったり）</p>
-            )}
-          </div>
+          {hasOver && (
+            <div className="overproduction">
+              <h3 className="over-title">過剰生産（廃棄に計上されます）</h3>
+              <table className="over-table">
+                <thead>
+                  <tr><th>品目</th><th>長さ</th><th>需要</th><th>生産</th><th>過剰</th></tr>
+                </thead>
+                <tbody>
+                  {production.filter((r) => r.over > 0).map((r) => (
+                    <tr key={r.length}>
+                      <td>{r.label || r.length}</td>
+                      <td>{r.length} mm</td>
+                      <td>{r.demand}</td>
+                      <td>{r.produced}</td>
+                      <td className="over-cell">+{r.over}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </main>
       </div>
     </div>
