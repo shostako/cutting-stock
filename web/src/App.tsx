@@ -61,10 +61,12 @@ function App() {
   }, [theme])
 
   const labelOf = useMemo(() => {
+    // ラベルはスキームで解決して凡例・帯を一致させる（解く前の fixture 表示でも整合）
+    const labels = resolveLabels(solvedInput.demand, solvedInput.labelScheme)
     const m = new Map<number, string>()
-    for (const d of solvedInput.demand) m.set(d.length, d.label)
+    solvedInput.demand.forEach((d, i) => m.set(d.length, labels[i]))
     return (l: number) => m.get(l) ?? String(l)
-  }, [solvedInput.demand])
+  }, [solvedInput])
 
   const colorOf = useMemo(() => {
     const lengths = result.solution.patterns.flatMap((p) => p.cuts)
