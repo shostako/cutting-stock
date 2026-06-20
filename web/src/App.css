@@ -8,6 +8,8 @@
 .app-header h1 { font-size: 18px; }
 .header-right { display: flex; align-items: center; gap: 16px; font-size: 12px; color: var(--ink-soft); }
 .health-warn { color: var(--warn); font-weight: 600; }
+.theme-toggle { font-size: 12px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink-soft); cursor: pointer; white-space: nowrap; }
+.theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
 /* ── レイアウト: 左操作 / 右主役 ── */
 .layout { display: grid; grid-template-columns: 360px 1fr; gap: 16px; padding: 16px; align-items: start; }
@@ -39,7 +41,7 @@
 .label-scheme { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .ls-caption { font-size: 11px; color: var(--ink-soft); }
 .ls-seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-.ls-btn { font-size: 11px; padding: 4px 9px; background: #fff; color: var(--ink-soft); border: none; border-left: 1px solid var(--line); cursor: pointer; }
+.ls-btn { font-size: 11px; padding: 4px 9px; background: var(--panel); color: var(--ink-soft); border: none; border-left: 1px solid var(--line); cursor: pointer; }
 .ls-btn:first-child { border-left: none; }
 .ls-btn.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 .label-auto { display: inline-block; min-width: 48px; font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
@@ -105,7 +107,7 @@
 /* ── 現場向け: ツールバー操作・過剰生産・印刷 ── */
 .right-toolbar-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .report-actions { display: flex; gap: 8px; }
-.report-btn { font-size: 13px; padding: 5px 12px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink); cursor: pointer; font-weight: 600; }
+.report-btn { font-size: 13px; padding: 5px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); cursor: pointer; font-weight: 600; }
 .report-btn:hover { background: var(--line-soft); }
 
 .demo-load { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
@@ -130,6 +132,11 @@
 
 /* ── 印刷: カット指示書だけを綺麗に出す ── */
 @media print {
+  /* 印刷はテーマ無関係に白地・濃文字へ固定（ダークだと白紙に薄文字で読めないため） */
+  :root, :root[data-theme="dark"] {
+    --bg: #ffffff; --panel: #ffffff; --ink: #1f2530; --ink-soft: #5b6472;
+    --line: #dfe2e8; --line-soft: #eceef2; --kerf: #2f343c; --waste: #cdd0d6;
+  }
   .app-header, .left, .right-toolbar, .stale-banner { display: none !important; }
   .layout { display: block; }
   .right { width: 100%; }

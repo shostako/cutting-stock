@@ -1,5 +1,4 @@
 import type { Pattern, Segment } from '../api/types'
-import { KERF_COLOR, WASTE_COLOR } from '../colors'
 import { fmt } from '../format'
 
 // 比率忠実バー: 各 segment を left=offset/L%, width=length/L% の絶対配置 div で描く。
@@ -8,8 +7,8 @@ import { fmt } from '../format'
 
 function fillOf(seg: Segment, colorOf: (l: number) => string): string {
   if (seg.kind === 'piece') return colorOf(seg.item_length as number)
-  if (seg.kind === 'kerf') return KERF_COLOR
-  return WASTE_COLOR
+  if (seg.kind === 'kerf') return 'var(--kerf)'   // テーマ追従（index.css）
+  return 'var(--waste)'
 }
 
 export function PatternBar({ pattern, colorOf }: { pattern: Pattern; colorOf: (l: number) => string }) {

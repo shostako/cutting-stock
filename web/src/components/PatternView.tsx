@@ -1,5 +1,4 @@
 import type { Solution } from '../api/types'
-import { KERF_COLOR, WASTE_COLOR } from '../colors'
 import { fmt } from '../format'
 import { OptimalityBadge, PatternsBadge } from './OptimalityBadge'
 import { PatternBar } from './PatternBar'
@@ -26,11 +25,11 @@ export function Legend({
         )
       })}
       <span className="legend-item">
-        <span className="swatch" style={{ background: KERF_COLOR }} />
+        <span className="swatch" style={{ background: 'var(--kerf)' }} />
         カット代（視認のため最小幅）
       </span>
       <span className="legend-item">
-        <span className="swatch" style={{ background: WASTE_COLOR }} />
+        <span className="swatch" style={{ background: 'var(--waste)' }} />
         残材
       </span>
     </div>

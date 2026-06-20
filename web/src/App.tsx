@@ -40,6 +40,10 @@ function App() {
   const [feasibility, setFeasibility] = useState<string | null>(null)
   const [healthy, setHealthy] = useState<boolean | null>(null)
   const [dirty, setDirty] = useState(false) // 入力が最新の結果と乖離（再計算が要る）
+  // 初期値は main.tsx が描画前に <html data-theme> へ同期適用済み
+  const [theme, setTheme] = useState<'light' | 'dark'>(
+    () => (document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'),
+  )
   const abortRef = useRef<AbortController | null>(null)
 
   const updateInput = (s: InputState) => {
@@ -50,6 +54,11 @@ function App() {
   useEffect(() => {
     health().then(setHealthy)
   }, [])
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    localStorage.setItem('theme', theme)
+  }, [theme])
 
   const labelOf = useMemo(() => {
     const m = new Map<number, string>()
@@ -121,6 +130,14 @@ function App() {
           {healthy === false && (
             <span className="health-warn">⚠ サーバーに接続できません（サンプル表示中）</span>
           )}
+          <button
+            className="theme-toggle"
+            onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+            title={theme === 'dark' ? 'ライトモードに切替' : 'ダークモードに切替'}
+            aria-label="テーマ切替"
+          >
+            {theme === 'dark' ? '☀ ライト' : '☾ ダーク'}
+          </button>
         </div>
       </header>
 

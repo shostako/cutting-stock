@@ -6,8 +6,7 @@ const PALETTE = [
   '#86bcb6', '#d37295', '#a0743a', '#79706e',
 ]
 
-export const KERF_COLOR = '#2f343c'
-export const WASTE_COLOR = '#cdd0d6'
+// kerf/waste 色はテーマ追従のため CSS 変数 --kerf / --waste（index.css）へ移管。
 
 export function makeColorOf(lengths: number[]): (length: number) => string {
   const sorted = Array.from(new Set(lengths)).sort((a, b) => a - b)

@@ -12,6 +12,8 @@
   --ok-soft: #e3f1e9;
   --warn: #b5710f;
   --warn-soft: #f7eddb;
+  --kerf: #2f343c;
+  --waste: #cdd0d6;
 
   --mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
   font-family: system-ui, "Segoe UI", "Hiragino Sans", "Noto Sans JP", Meiryo, sans-serif;
@@ -19,6 +21,24 @@
   line-height: 1.5;
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
+}
+
+/* ダークパレット（同じCSS変数を上書き。<html data-theme="dark"> で有効化） */
+:root[data-theme="dark"] {
+  --bg: #15181d;
+  --panel: #1e222a;
+  --ink: #e7eaf0;
+  --ink-soft: #9aa3b2;
+  --line: #333a45;
+  --line-soft: #272c34;
+  --accent: #6aa5dd;
+  --accent-soft: #1c2c3c;
+  --ok: #5cba86;
+  --ok-soft: #1b2c23;
+  --warn: #d99a3c;
+  --warn-soft: #312819;
+  --kerf: #6b727d;
+  --waste: #3a3f48;
 }
 
 * { box-sizing: border-box; }
