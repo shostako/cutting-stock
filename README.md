@@ -20,7 +20,8 @@ pinned: false
 2. **その最少本数のまま、切り方（カットパターンの種類）の数を最小化** — CP-SAT 候補プール選択MIP で証明
 
 の2段を順に解き、**本数も廃棄も一切犠牲にせず、最少本数の中で最も切り方の少ない計画を1つ**返す。
-両方とも「最小であること」を証明付きで提示する。リッチな Web GUI でカットパターンを比率忠実な棒グラフで可視化し、
+両方とも「最小であること」を証明付きで提示する。需要は常に「ちょうど」満たす＝
+**切らなくてよいピースは初めから切らない**（過剰生産なし。余剰は未カットの端材として残す）。リッチな Web GUI でカットパターンを比率忠実な棒グラフで可視化し、
 現場向けのカット指示書（印刷 / CSV）も出力する。
 
 > トレードオフ（材料を余分に使って切り方をさらに減らす）やパレート前線は提供しない。**答えは常に1つ**。
@@ -33,7 +34,7 @@ pinned: false
 |----|------|------|
 | ソルバ核 | Python 3.12 + [HiGHS](https://highs.dev/)（`highspy`）/ [OR-Tools CP-SAT](https://developers.google.com/optimization) | 第1段 = Arc-flow MIP（使用本数最小・gap=0 証明）/ 第2段 = CP-SAT 候補プール選択MIP（本数固定で切り方の種類最小・証明付き）。`oracle.py` が独立 CP-SAT で本数を裏取り（CI 保険） |
 | API 境界 | FastAPI | `/solve` `/validate` `/healthz`。JSON の入出力はここだけ |
-| GUI | React + Vite + TypeScript | 比率忠実な棒グラフ／カット指示書（印刷・CSV）／2段の最適性証明バッジ／ラベル方式選択（長さ・英字・数字・手動）／デモ例（Wikipedia 板取り等）／ライト・ダーク切替（OS 追従・記憶）／スマホ対応／過剰生産は出た時のみ警告。チャートは全て自前（依存は react のみ） |
+| GUI | React + Vite + TypeScript | 比率忠実な棒グラフ／カット指示書（印刷・CSV）／2段の最適性証明バッジ／ラベル方式選択（長さ・英字・数字・手動）／デモ例（Wikipedia 板取り等）／ライト・ダーク切替（OS 追従・記憶）／スマホ対応。チャートは全て自前（依存は react のみ） |
 
 カット代は **Model A**（各取りに1カット、`Σℓ_j + m·k ≤ L`）。詳細は [`docs/SPEC.md`](docs/SPEC.md)。
 
@@ -62,9 +63,9 @@ echo '{"stock":{"length":2995,"kerf":10},"demand":[{"length":990,"qty":5}]}' | u
 ## ドキュメント
 
 - [`docs/SPEC.md`](docs/SPEC.md) — 問題仕様・目的関数・カット代の数え方
-- [`docs/SOLVER_DESIGN.md`](docs/SOLVER_DESIGN.md) — ソルバ核の確定設計（SSOT）
-- [`docs/GUI_DESIGN.md`](docs/GUI_DESIGN.md) — GUI の確定設計（SSOT）
-- [`docs/PLAN.md`](docs/PLAN.md) — ビルド方針・技術スタック
+- [`docs/SOLVER_DESIGN.md`](docs/SOLVER_DESIGN.md) — ソルバ核の現行設計（SSOT）
+- [`docs/GUI_DESIGN.md`](docs/GUI_DESIGN.md) — GUI の現行設計（SSOT）
+- `docs/history/` — 旧設計・設計変遷の経緯（二軸パレート撤回、M0-M7 履歴など）
 
 ## デプロイ（Hugging Face Spaces）
 
