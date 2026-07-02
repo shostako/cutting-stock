@@ -11,20 +11,27 @@ from __future__ import annotations
 import pytest
 
 from solver.models import DemandItem, Problem, StockSpec
-from solver.setup_mip import _enumerate_maximal_patterns
+from solver.setup_mip import _enumerate_patterns
 from solver.solve import solve, solve_material
 
 
-def test_enumerate_maximal_patterns_small() -> None:
-    # L=8, widths=[5,3]: maximal は {5,3}=(1,1) と {3,3}=(0,2) の2つだけ
-    pool = _enumerate_maximal_patterns([5, 3], 8, 1000)
+def test_enumerate_patterns_small() -> None:
+    # L=8, widths=[5,3]: 有効パターン（非空）は {5}, {3}, {5,3}, {3,3} の4つ
+    pool = _enumerate_patterns([5, 3], 8, 1000)
     assert pool is not None
-    assert set(pool) == {(1, 1), (0, 2)}
+    assert set(pool) == {(1, 0), (0, 1), (1, 1), (0, 2)}
 
 
-def test_enumerate_maximal_patterns_cap_signals_none() -> None:
+def test_enumerate_patterns_demand_pruning() -> None:
+    # 需要 d=[1,1] なら (0,2)（type2を2個）は使用不能 → 列挙から除外される
+    pool = _enumerate_patterns([5, 3], 8, 1000, demands=[1, 1])
+    assert pool is not None
+    assert set(pool) == {(1, 0), (0, 1), (1, 1)}
+
+
+def test_enumerate_patterns_cap_signals_none() -> None:
     # cap を超えたら None（列挙不能シグナル = config-B フォールバックへ）
-    assert _enumerate_maximal_patterns([5, 3], 8, 0) is None
+    assert _enumerate_patterns([5, 3], 8, 0) is None
 
 
 # --- Wikipedia "Cutting stock problem" 製紙ロール古典例（既知最適あり）---
@@ -67,4 +74,4 @@ def test_wikipedia_lexicographic_optimum() -> None:
         for length, cnt in p.item_counts:
             produced[length] = produced.get(length, 0) + cnt * p.run_count
     for it in WIKIPEDIA.demand:
-        assert produced[it.length] >= it.qty
+        assert produced[it.length] == it.qty           # 需要ちょうど（過剰生産なし）

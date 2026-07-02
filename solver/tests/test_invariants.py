@@ -36,7 +36,7 @@ def assert_invariants(problem: Problem, sol) -> None:
         end_waste += p.waste(k) * p.run_count
     # 物理保存: 占有（ピース＋kerf）＋ 端材 = 原材料総量（過剰生産に依らず常に成立）
     assert sol.bars_used * L == occupancy + end_waste
-    # 廃棄量メトリクス（SPEC.md:52）: z·L − 総需要長. kerf・端材・過剰生産を含み, z に単調.
+    # 廃棄量メトリクス（SPEC.md「目的関数」）: z·L − 総需要長. kerf・端材・過剰生産を含み, z に単調.
     demand_length = sum(it.length * it.qty for it in problem.demand)
     assert sol.total_waste == sol.bars_used * L - demand_length
     assert sol.total_waste >= 0
@@ -57,7 +57,7 @@ def test_edge_single_type() -> None:
 
 
 def test_edge_piece_exactly_fills_with_kerf() -> None:
-    # ℓ+k = L ちょうど → 1本1ピース、端材0. ただし kerf 5×10=50 は廃棄に計上（SPEC.md:52）.
+    # ℓ+k = L ちょうど → 1本1ピース、端材0. ただし kerf 5×10=50 は廃棄に計上（SPEC.md「目的関数」）.
     p = mk(1000, 10, [(990, 5)])
     sol = solve_material(p)
     assert sol.bars_used == 5

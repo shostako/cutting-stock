@@ -30,20 +30,7 @@ const DEMO1: InputState = {
   ],
 }
 
-// demo2: 小規模な既定例（カット代 3mm）
-const DEMO2: InputState = {
-  length: 1200,
-  kerf: 3,
-  labelScheme: 'length',
-  demand: [
-    { length: 500, qty: 4, label: 'A' },
-    { length: 340, qty: 6, label: 'B' },
-    { length: 290, qty: 5, label: 'C' },
-    { length: 210, qty: 7, label: 'D' },
-  ],
-}
-
-// demo3: ランダム生成（規模を抑える: 原材料1000–2399mm / 品種3–5 / 各2–8本 / ピース≤原材料の6割）
+// demo2: ランダム生成（規模を抑える: 原材料1000–2399mm / 品種3–5 / 各2–8本 / ピース≤原材料の6割）
 function makeRandomDemo(): InputState {
   const length = 1000 + Math.floor(Math.random() * 1400)
   const kerf = [0, 3, 5][Math.floor(Math.random() * 3)]
@@ -91,8 +78,7 @@ export function InputPanel({
       <div className="demo-load">
         <span className="demo-caption">デモ</span>
         <button className="demo-btn" onClick={() => onChange(DEMO1)} title="Wikipedia板取り代表例（73本 / 切り方10通り）">demo1</button>
-        <button className="demo-btn" onClick={() => onChange(DEMO2)} title="小規模な既定例（カット代3mm）">demo2</button>
-        <button className="demo-btn" onClick={() => onChange(makeRandomDemo())} title="ランダム生成（押すたびに変わる）">demo3</button>
+        <button className="demo-btn" onClick={() => onChange(makeRandomDemo())} title="ランダム生成（押すたびに変わる）">demo2</button>
       </div>
       <section>
         <h2>原材料（初期設定）</h2>

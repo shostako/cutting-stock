@@ -4,6 +4,7 @@
   ① 使用本数を最小化（arc-flow MIP on HiGHS, gap=0 証明）.
   ② その最少本数のまま切り方（パターン種類）の数を最小化（CP-SAT 候補プール選択MIP, 証明付き）.
 本数も廃棄も犠牲にせず、最少本数の中で最も切り方の少ない計画を1つ返す.
+両段とも需要は == で締める（過剰生産＝切らなくてよいピースを一切作らない. 余剰は未カットの端材）.
 """
 
 from __future__ import annotations
@@ -38,7 +39,7 @@ def solve_material(problem: Problem, *, time_limit: float | None = None) -> Solu
 
     z = flow.bars
     L = norm.stock_length
-    # 廃棄量は SPEC.md:52 の定義: z·L − 総需要長（kerf・端材・過剰生産を含み, z に対し単調）.
+    # 廃棄量は SPEC.md「目的関数」の定義: z·L − 総需要長（kerf・端材を含み, z に対し単調）.
     # 過剰生産ピースを占有として計上すると z 増で廃棄が減る非単調が起きる（M7 bug#2）ため、
     # 占有合計でなく「需要された長さ」だけを差し引く.
     demand_length = sum(it.length * it.qty for it in problem.demand)

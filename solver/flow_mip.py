@@ -1,6 +1,8 @@
 """材料最適（使用本数最小）= arc-flow MIP on HiGHS.
 
-min（vertex0 から出るフロー）s.t. 内部頂点でフロー保存 + 各 item の総フロー ≥ d_i.
+min（vertex0 から出るフロー）s.t. 内部頂点でフロー保存 + 各 item の総フロー == d_i.
+需要は「ちょうど」満たす（過剰生産を作らない）. 余剰は loss 弧（未カットの端材）へ流れるため、
+== に締めても最小本数 z* は ≥ と同一（任意の ≥ 解は余剰ピースを端材に置換して == 解にできる）.
 グラフは DAG（全弧が位置を増やす）なので循環なし、vertex0→W' のフロー = 使用本数.
 
 最適性は (a) HiGHS の mip_gap==0、(b) LP 緩和を別途解いた独立下界、の二重で裏取りする.
@@ -73,9 +75,9 @@ def _build(graph: ArcGraph, *, integer: bool, ub: float, time_limit: float | Non
             continue
         h.addConstr(h.qsum(in_v[vtx]) == h.qsum(out_v[vtx]))
 
-    # 需要充足
+    # 需要充足（ちょうど d_i: 過剰生産を作らない. 余りは loss 弧＝未カット端材へ）
     for i, d in enumerate(graph.demands):
-        h.addConstr(h.qsum(item_by_item[i]) >= d)
+        h.addConstr(h.qsum(item_by_item[i]) == d)
 
     # 目的: vertex0 から出るフロー = 使用本数
     h.minimize(h.qsum(out_v[0]))
