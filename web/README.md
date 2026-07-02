@@ -22,12 +22,34 @@ dev サーバは `/solve` `/validate` `/healthz` を `127.0.0.1:8000` へ proxy 
 ## 構成
 
 - `src/api/` — 型定義（`types.ts`）と fetch クライアント（`client.ts`）
-- `src/components/` — InputPanel / ParetoChart / MetricsCard / PatternView(+PatternBar) / ComparePanel / OptimalityBadge
-- `src/colors.ts` `src/format.ts` — 色割当・数値整形
-- チャートは全て自前（棒=幅%の比率忠実 HTML、散布図=SVG）。依存は react/react-dom のみ。
+- `src/components/` — InputPanel / MetricsCard / PatternView(+PatternBar) / OptimalityBadge
+- `src/colors.ts` `src/labels.ts` `src/format.ts` `src/report.ts` — 色割当・ラベル・整形・指示書生成
+- チャートは全て自前（棒=幅%の比率忠実 HTML）。依存は react/react-dom のみ。
 
 ## ビルド
 
 ```sh
 npm run build    # tsc 型チェック + vite build → dist/
+```
+
+## テスト
+
+```sh
+npm test         # vitest: ロジック層（report/labels/colors）のユニットテスト
+```
+
+E2E スモーク（実ソルバ + ビルド済み GUI の通し検証。要 build と Python playwright）:
+
+```sh
+npm run build
+cd .. && python3 web/e2e/smoke.py
+```
+
+## フィクスチャ再生成
+
+`src/fixtures.ts` は手で編集しない。スキーマ変更時は実ソルバ出力から再生成する:
+
+```sh
+# リポジトリ直下で
+uv run python web/scripts/gen_fixtures.py
 ```
