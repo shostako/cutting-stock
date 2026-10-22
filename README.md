@@ -86,6 +86,10 @@ git push space main
 push すると HF 側で Docker をビルドし、`https://<user>-cutting-stock.hf.space` で公開される（スマホ可）。
 ローカルで Docker を試すなら `docker build -t cutting-stock . && docker run -p 7860:7860 cutting-stock`。
 
+## 変更履歴
+
+[CHANGELOG.md](CHANGELOG.md) を見る。
+
 ## ライセンス
 
 [MIT](LICENSE)
